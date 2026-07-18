@@ -400,7 +400,7 @@
 
   /* Staggered list fade-in-up */
   .animate-fade-in-up {
-    animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: fadeInUp 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
     opacity: 0;
   }
 
@@ -410,9 +410,12 @@
     transform-origin: top right;
   }
 
-  /* Status Indicator Pulse (3s) */
-  .animate-pulse-slow {
-    animation: pulseSlow 3s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  /* Status Indicator Breathing (Green: 2.5s, Yellow: 3s) */
+  .animate-breathe-green {
+    animation: breatheDot 2.5s ease-in-out infinite;
+  }
+  .animate-breathe-yellow {
+    animation: breatheDot 3s ease-in-out infinite;
   }
 
   /* Notification Badge Bounce */
@@ -429,6 +432,14 @@
   .animate-fade-in {
     animation: fadeIn 0.8s ease forwards;
     opacity: 0;
+  }
+
+  /* Progress Bar Entrance (GPU Accelerated) */
+  .animate-progress-bar {
+    animation: progressEntrance 1s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+    transform-origin: left;
+    /* initial state before animation starts running */
+    transform: scaleX(0);
   }
 
   /* Page transition — wraps each page on route change */
@@ -509,18 +520,14 @@
   }
 }
 
-@keyframes pulseSlow {
-  0% {
+@keyframes breatheDot {
+  0%, 100% {
     transform: scale(1);
-    opacity: 0.6;
+    opacity: 0.75;
   }
   50% {
-    transform: scale(1.5);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 0;
+    transform: scale(1.12);
+    opacity: 1;
   }
 }
 
@@ -535,6 +542,15 @@
   }
   to {
     stroke-dashoffset: 0;
+  }
+}
+
+@keyframes progressEntrance {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
   }
 }
 
@@ -573,9 +589,11 @@
   .animate-shimmer,
   .animate-fade-in-up,
   .animate-dropdown-open,
-  .animate-pulse-slow,
+  .animate-breathe-green,
+  .animate-breathe-yellow,
   .animate-bounce-subtle,
   .animate-draw-line,
+  .animate-progress-bar,
   .animate-fade-in,
   .animate-page-enter,
   .sparkline-draw {

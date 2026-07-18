@@ -1,6 +1,7 @@
+import { useState, useEffect } from 'react'
 import { X, LayoutDashboard, Server, FileText, Settings, Activity, Layers, GitBranch, BarChart2, Key, Terminal, Zap } from 'lucide-react'
 import { cn } from '../utils'
-
+import { useReducedMotion } from '../motion/useReducedMotion'
 export type Page =
   | 'overview'
   | 'providers'
@@ -83,6 +84,21 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activePage, setActivePage, open, onClose }: SidebarProps) {
+  // Animation state for progress bars
+  const [animated, setAnimated] = useState(false)
+  const reduced = useReducedMotion()
+  
+  useEffect(() => {
+    if (reduced) {
+      setAnimated(true)
+      return
+    }
+    const timer = setTimeout(() => {
+      setAnimated(true)
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [reduced])
+
   const handleNav = (page: Page, e: React.MouseEvent<HTMLButtonElement>) => {
     // Immediately release focus from the clicked button so the browser never
     // renders a focus ring / border on the previously-active item.
@@ -225,7 +241,14 @@ export default function Sidebar({ activePage, setActivePage, open, onClose }: Si
                 </span>
               </div>
               <div className="w-full h-1 rounded-full overflow-hidden" style={{ background: 'var(--color-sidebar-border-right)' }}>
-                <div className="h-full rounded-full" style={{ width: '49%', background: 'var(--color-accent)' }} />
+                <div 
+                  className="h-full rounded-full" 
+                  style={{ 
+                    width: `${animated ? 49 : 0}%`, 
+                    background: 'var(--color-accent)',
+                    transition: 'width 1.2s cubic-bezier(0.22, 0.61, 0.36, 1) 150ms'
+                  }} 
+                />
               </div>
             </div>
           </div>

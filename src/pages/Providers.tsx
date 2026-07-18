@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Plus,
   RefreshCw,
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { formatLatency } from '../utils'
 import { useCountUp } from '../motion/useCountUp'
+import { useReducedMotion } from '../motion/useReducedMotion'
 
 function AnimatedNumber({ value, decimals = 0 }: { value: number, decimals?: number }) {
   const animatedValue = useCountUp(value, 1000, decimals)
@@ -421,6 +422,22 @@ export default function Providers() {
   const [providers, setProviders] = useState<Provider[]>(initialProviders)
   const [showAddModal, setShowAddModal] = useState(false)
   const [dragOver, setDragOver] = useState<string | null>(null)
+  
+  // Animation state for progress bars
+  const [animated, setAnimated] = useState(false)
+  const reduced = useReducedMotion()
+  
+  useEffect(() => {
+    if (reduced) {
+      setAnimated(true)
+      return
+    }
+    const timer = setTimeout(() => {
+      setAnimated(true)
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [reduced])
+
 
   const toggleProvider = (id: string) => {
     setProviders((ps) =>
@@ -584,8 +601,8 @@ export default function Providers() {
                   <div
                     className="h-full rounded-full"
                     style={{
-                      transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)',
-                      width: `${(provider.quotaUsed / provider.quota) * 100}%`,
+                      width: `${animated ? (provider.quotaUsed / provider.quota) * 100 : 0}%`,
+                      transition: `width 1.2s cubic-bezier(0.22, 0.61, 0.36, 1) ${idx * 80}ms`,
                       background:
                         provider.quotaUsed / provider.quota > 0.9
                           ? 'var(--color-accent)'

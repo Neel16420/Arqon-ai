@@ -185,6 +185,7 @@ interface StatCardProps {
   icon: React.ReactNode
   label: string
   value: string
+  valueNode?: React.ReactNode   // overrides value/valueNum rendering when provided
   valueNum?: number
   valueSuffix?: string
   valueDecimals?: number
@@ -194,9 +195,12 @@ interface StatCardProps {
   sparkColor?: string
 }
 
-function StatCard({ id, icon, label, value, valueNum, valueSuffix, valueDecimals, delta, deltaPositive, sparkData: data, sparkColor = 'var(--color-accent)' }: StatCardProps) {
-  const animatedValue = useCountUp(valueNum || 0, 1000, valueDecimals || 0)
-  const displayValue = valueNum !== undefined ? `${animatedValue}${valueSuffix || ''}` : value
+function StatCard({ id, icon, label, value, valueNode, valueNum, valueSuffix, valueDecimals, delta, deltaPositive, sparkData: data, sparkColor = 'var(--color-accent)' }: StatCardProps) {
+  // Duration kept in a ref so StatCard re-renders never cause the hook
+  // to see a changed dependency and replay the animation.
+  const animatedValue = useCountUp(valueNum ?? 0, 1400, valueDecimals ?? 0)
+  // valueNode takes precedence (e.g. FractionDisplay); then valueNum; then static value string.
+  const displayValue  = valueNode ?? (valueNum !== undefined ? `${animatedValue}${valueSuffix ?? ''}` : value)
 
   return (
     <div
@@ -261,6 +265,18 @@ function StatCard({ id, icon, label, value, valueNum, valueSuffix, valueDecimals
   )
 }
 
+/**
+ * FractionDisplay — count-up for "numerator / denominator" values (e.g. "5 / 6").
+ * Each number animates independently from 0 to its final value.
+ * Both useCountUp calls use an empty-dep-array internally, so animation
+ * plays once on mount and never replays on re-render or theme change.
+ */
+function FractionDisplay({ numerator, denominator }: { numerator: number; denominator: number }) {
+  const animNum = useCountUp(numerator,   1400, 0)
+  const animDen = useCountUp(denominator, 1400, 0)
+  return <>{animNum} / {animDen}</>
+}
+
 
 function StatusDot({ status }: { status: string }) {
   const colors: Record<string, string> = {
@@ -268,14 +284,29 @@ function StatusDot({ status }: { status: string }) {
     warning: 'var(--color-warning)',
     error: 'var(--color-accent)',
   }
+  
+  const breathingClass = status === 'healthy' 
+    ? 'animate-breathe-green' 
+    : status === 'warning' 
+      ? 'animate-breathe-yellow' 
+      : ''
+
   return (
     <span className="relative flex h-2 w-2">
-      {status === 'healthy' && (
-        <span className="animate-pulse-slow absolute inline-flex h-full w-full rounded-full opacity-60" style={{ background: colors[status] }} />
-      )}
-      <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: colors[status] || 'var(--color-muted)' }} />
+      <span className={`relative inline-flex rounded-full h-2 w-2 ${breathingClass}`} style={{ background: colors[status] || 'var(--color-muted)' }} />
     </span>
   )
+}
+
+/**
+ * PercentCountUp — animates a percentage string from 0 to final value.
+ * Parses the string to find the number and decimals, then uses useCountUp.
+ */
+function PercentCountUp({ valueStr }: { valueStr: string }) {
+  const num = parseFloat(valueStr)
+  const decimals = valueStr.includes('.') ? valueStr.split('.')[1].replace(/[^0-9]/g, '').length : 0
+  const animNum = useCountUp(num, 1000, decimals)
+  return <>{animNum}%</>
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -383,6 +414,7 @@ export default function Overview({ navigate }: { navigate?: (page: string) => vo
           icon={<Server size={16} className="text-warning" />}
           label="Healthy Providers"
           value="5 / 6"
+          valueNode={<FractionDisplay numerator={5} denominator={6} />}
           delta="-1"
           deltaPositive={false}
           sparkData={sparkData.healthy}
@@ -428,8 +460,12 @@ export default function Overview({ navigate }: { navigate?: (page: string) => vo
             System Status
           </h3>
           <div className="space-y-3">
-            {systemStatus.map((s) => (
-              <div key={s.name} className="flex items-center justify-between">
+            {systemStatus.map((s, idx) => (
+              <div 
+                key={s.name} 
+                className="flex items-center justify-between animate-fade-in-up"
+                style={{ animationDelay: `${idx * 80}ms` }}
+              >
                 <div className="flex items-center gap-2.5">
                   <StatusDot status={s.status} />
                   <span className="text-sm text-foreground">{s.name}</span>
@@ -441,7 +477,7 @@ export default function Overview({ navigate }: { navigate?: (page: string) => vo
                     color: s.status === 'healthy' ? 'var(--color-success)' : 'var(--color-warning)',
                   }}
                 >
-                  {s.uptime}
+                  <PercentCountUp valueStr={s.uptime} />
                 </span>
               </div>
             ))}
