@@ -17,6 +17,7 @@ import {
 import { formatLatency } from '../utils'
 import { useCountUp } from '../motion/useCountUp'
 import { useReducedMotion } from '../motion/useReducedMotion'
+import { ProviderIcon } from '../components/icons/ProviderLogos'
 
 function AnimatedNumber({ value, decimals = 0 }: { value: number, decimals?: number }) {
   const animatedValue = useCountUp(value, 1000, decimals)
@@ -527,17 +528,29 @@ export default function Providers() {
             </div>
 
             {/* Provider header */}
-            <div className="flex items-center gap-3 pr-16">
+            <div className="flex items-center gap-3 pr-16 group/header">
               <div
-                className="flex items-center justify-center w-10 h-10 rounded-xl text-sm font-bold"
+                className="flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 shadow-sm"
                 style={{
                   background: `${provider.color}18`,
-                  border: `1px solid ${provider.color}30`,
+                  border: `1px solid ${provider.color}40`,
                   color: provider.color,
-                  fontFamily: "'Space Grotesk', sans-serif",
+                  '--hover-glow': `0 0 12px ${provider.color}40`,
+                  '--hover-border': `${provider.color}80`,
+                } as React.CSSProperties}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = `0 0 12px ${provider.color}50`
+                  e.currentTarget.style.borderColor = `${provider.color}90`
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)'
+                  e.currentTarget.style.borderColor = `${provider.color}40`
                 }}
               >
-                {provider.letter}
+                <ProviderIcon 
+                  type={provider.type} 
+                  className="w-5 h-5 transition-transform duration-300 group-hover:scale-105" 
+                />
               </div>
               <div>
                 <p className="text-sm font-medium text-foreground">{provider.name}</p>

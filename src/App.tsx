@@ -107,7 +107,7 @@ export default function App() {
   useTheme()
 
   if (!session.isAuthenticated) {
-    return <Login onLogin={() => login()} />
+    return <Login onLogin={(session) => login(session)} />
   }
 
   const p1Meta = P1_META[activePage]

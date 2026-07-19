@@ -145,12 +145,12 @@ export function useAuth() {
   )
 
   /** Call after a successful password check. Does NOT accept a password. */
-  const login = useCallback((opts?: Partial<Omit<AuthSession, 'isAuthenticated'>>) => {
+  const login = useCallback((opts: Omit<AuthSession, 'isAuthenticated'>) => {
     const next: AuthSession = {
       isAuthenticated: true,
-      userName:  opts?.userName  ?? 'Administrator',
-      userRole:  opts?.userRole  ?? 'admin',
-      userEmail: opts?.userEmail ?? 'admin@arqon.internal',
+      userName:  opts.userName,
+      userRole:  opts.userRole,
+      userEmail: opts.userEmail,
     }
     AuthStorage.write(next)
     setSession(next)

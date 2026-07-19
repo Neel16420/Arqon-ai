@@ -1,4 +1,5 @@
 {
+  "title": "AI Router Dashboard",
   "description": "Enterprise AI orchestration platform enabling seamless routing, monitoring, and management of AI providers for optimized performance and reliability.",
   "robots": {
     "index": false

@@ -23,6 +23,7 @@ import { useEngineBreath } from '../motion/useEngineBreath'
 import { useReducedMotion } from '../motion/useReducedMotion'
 import { ROUTE, PACKET, ENGINE } from '../motion/motionTokens'
 import type { RouteNode } from '../motion/usePacketAnimation'
+import { ProviderIcon } from './icons/ProviderLogos'
 
 // ─── Static data (mirrors Overview.tsx routingNodes) ──────────────────────────
 
@@ -82,11 +83,13 @@ function RouteArm({
 
   return (
     <g
+      className="group"
       style={{
         opacity,
         transition: `opacity ${ROUTE.switchDuration}ms cubic-bezier(0.16,1,0.3,1)`,
         cursor: 'pointer',
-      }}
+        '--node-color': provider.color,
+      } as React.CSSProperties}
       onClick={onClick}
     >
       {/* Bezier curve: engine right edge → provider */}
@@ -114,7 +117,7 @@ function RouteArm({
       {/* Entry dot at curve end */}
       <circle cx={CURVE_END_X} cy={rowY} r={isActive ? 4 : 3} fill={provider.color} />
 
-      {/* Provider icon circle */}
+      {/* Provider icon circle container */}
       <circle
         cx={590}
         cy={rowY}
@@ -122,10 +125,34 @@ function RouteArm({
         fill="var(--color-surface-2)"
         stroke={isActive ? provider.color : 'var(--color-border)'}
         strokeWidth={isActive ? 1.5 : 1}
-        style={{ transition: `r ${ROUTE.switchDuration}ms ease, stroke ${ROUTE.switchDuration}ms ease` }}
+        className="transition-all duration-300"
+        style={{ 
+          filter: isActive ? `drop-shadow(0 0 6px ${provider.color}70)` : 'none',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.stroke = provider.color;
+          e.currentTarget.style.filter = `drop-shadow(0 0 8px ${provider.color}80)`;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.stroke = isActive ? provider.color : 'var(--color-border)';
+          e.currentTarget.style.filter = isActive ? `drop-shadow(0 0 6px ${provider.color}70)` : 'none';
+        }}
       />
-      {/* Provider color dot */}
-      <circle cx={590} cy={rowY} r={4} fill={provider.color} opacity="0.85" />
+      {/* Provider logo */}
+      <ProviderIcon
+        type={provider.name}
+        className="transition-all duration-300 group-hover:scale-105 group-hover:opacity-100"
+        style={{
+          color: provider.color,
+          opacity: isActive ? 1 : 0.75,
+          transformOrigin: '590px ' + rowY + 'px',
+          pointerEvents: 'none' // Let hover pass to the circle behind it
+        }}
+        x={590 - 8}
+        y={rowY - 8}
+        width={16}
+        height={16}
+      />
 
       {/* Provider name */}
       <text

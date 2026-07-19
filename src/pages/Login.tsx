@@ -146,8 +146,14 @@ function LoginBackground() {
 ───────────────────────────────────────────────────────────────────────── */
 const ADMIN_PASSWORD = 'arqon2024'
 
+interface LoginSession {
+  userName:  string
+  userRole:  string
+  userEmail: string
+}
+
 interface LoginProps {
-  onLogin: () => void
+  onLogin: (session: LoginSession) => void
 }
 
 export default function Login({ onLogin }: LoginProps) {
@@ -164,7 +170,7 @@ export default function Login({ onLogin }: LoginProps) {
     await new Promise((r) => setTimeout(r, 600))
     setLoading(false)
     if (password === ADMIN_PASSWORD) {
-      onLogin()
+      onLogin({ userName: 'Administrator', userRole: 'admin', userEmail: 'admin@arqon.internal' })
     } else {
       setError('Invalid admin password. Please try again.')
       setPassword('')
