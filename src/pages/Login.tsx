@@ -2,141 +2,171 @@ import { useState } from 'react'
 import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 
 /* ─────────────────────────────────────────────────────────────────────────
-   MESH DATA
-   Nodes spread mostly across the bottom half of the screen.
-   viewBox is 0 0 100 100 mapped to the full viewport.
+   CINEMATIC VOLUMETRIC LIGHT RIBBONS
+   GPU-accelerated, infinite looping, smooth morphing background.
 ───────────────────────────────────────────────────────────────────────── */
-const NODES: [number, number][] = [
-  // Bottom row (y: 85-100)
-  [ 5, 95], [15, 88], [25, 92], [35, 85], [45, 98], [55, 88], [65, 95], [75, 86], [85, 92], [95, 96],
-  // Lower-mid row (y: 70-85)
-  [10, 75], [20, 82], [30, 72], [40, 78], [50, 75], [60, 80], [70, 72], [80, 78], [90, 74], [100, 82],
-  // Mid row (y: 55-70)
-  [ 8, 60], [18, 65], [28, 58], [38, 68], [48, 60], [58, 65], [68, 55], [78, 68], [88, 62], [98, 58],
-  // Upper-mid scattered (y: 45-55, very faint due to mask)
-  [15, 50], [35, 48], [55, 52], [75, 46], [85, 50],
+import { useEffect, useRef } from 'react'
+
+// Arqon Colors
+const C1 = '#FF2E43'
+const C2 = '#FF445A'
+const C3 = '#FF6B6B'
+
+interface RibbonConfig {
+  id: number
+  color: string
+  amplitude: number
+  wavelength: number
+  speed: number
+  blur: number
+  opacityBase: number
+  opacityVar: number
+  opacitySpeed: number
+  scaleYSpeed: number
+  thickness: number
+  glowThickness: number
+}
+
+const RIBBONS: RibbonConfig[] = [
+  // 1: Back layer, largest, slowest, very blurry
+  { id: 1, color: C1, amplitude: 280, wavelength: 1800, speed: 0.8, blur: 60, opacityBase: 0.35, opacityVar: 0.15, opacitySpeed: 0.001, scaleYSpeed: 0.0008, thickness: 8, glowThickness: 60 },
+  // 2: Medium
+  { id: 2, color: C1, amplitude: 200, wavelength: 1400, speed: 1.2, blur: 40, opacityBase: 0.45, opacityVar: 0.15, opacitySpeed: 0.0012, scaleYSpeed: 0.001, thickness: 6, glowThickness: 40 },
+  // 3: Slightly brighter, mid-front
+  { id: 3, color: C2, amplitude: 140, wavelength: 1000, speed: 1.6, blur: 20, opacityBase: 0.65, opacityVar: 0.2, opacitySpeed: 0.0015, scaleYSpeed: 0.0012, thickness: 4, glowThickness: 25 },
+  // 4: Front layer, sharpest, fastest
+  { id: 4, color: C3, amplitude: 80, wavelength: 700, speed: 2.2, blur: 8, opacityBase: 0.9, opacityVar: 0.1, opacitySpeed: 0.002, scaleYSpeed: 0.0015, thickness: 2, glowThickness: 12 },
 ]
 
-const EDGES: [number, number][] = [
-  // Connect bottom row
-  [0,1], [1,2], [2,3], [3,4], [4,5], [5,6], [6,7], [7,8], [8,9],
-  // Connect lower-mid row
-  [10,11], [11,12], [12,13], [13,14], [14,15], [15,16], [16,17], [17,18], [18,19],
-  // Connect mid row
-  [20,21], [21,22], [22,23], [23,24], [24,25], [25,26], [26,27], [27,28], [28,29],
-  // Cross connections (bottom to lower-mid)
-  [0,10], [1,11], [2,12], [3,13], [4,14], [5,15], [6,16], [7,17], [8,18], [9,19],
-  [1,10], [2,11], [3,12], [4,13], [5,14], [6,15], [7,16], [8,17], [9,18],
-  // Cross connections (lower-mid to mid)
-  [10,20], [11,21], [12,22], [13,23], [14,24], [15,25], [16,26], [17,27], [18,28], [19,29],
-  [11,20], [12,21], [13,22], [14,23], [15,24], [16,25], [17,26], [18,27], [19,28],
-  // Cross connections (mid to upper-mid)
-  [20,30], [21,30], [23,31], [24,31], [25,32], [26,32], [27,33], [28,34], [29,34],
-]
+/**
+ * Generates an SVG path string for a smooth sine wave.
+ * Generates enough periods to cover 2x screen width + 1 wavelength for seamless looping.
+ */
+function generateSinePath(amplitude: number, wavelength: number): string {
+  const points = []
+  // Extend path to 3 times typical max screen width (3 * 2000 = 6000)
+  // Ensure it ends on an exact multiple of wavelength to allow perfect looping
+  const length = Math.ceil(6000 / wavelength) * wavelength
+  
+  for (let x = 0; x <= length; x += 10) {
+    const y = Math.sin((x / wavelength) * Math.PI * 2) * amplitude
+    points.push(`${x === 0 ? 'M' : 'L'} ${x} ${y}`)
+  }
+  return points.join(' ')
+}
 
-/* ─────────────────────────────────────────────────────────────────────────
-   BACKGROUND
-   Large black empty space at top. Soft red mesh at the bottom.
-───────────────────────────────────────────────────────────────────────── */
 function LoginBackground() {
-  return (
-    <div className="absolute inset-0 w-full h-full overflow-hidden" aria-hidden="true">
-      {/* ── 1. Pure black base ── */}
-      <div className="absolute inset-0" style={{ background: '#050505' }} />
+  const containerRef = useRef<HTMLDivElement>(null)
+  
+  useEffect(() => {
+    let animationFrameId: number;
+    let startTime = performance.now();
+    
+    // Store refs to DOM elements to avoid React re-renders (GPU accelerated only)
+    const ribbons = RIBBONS.map(r => ({
+      config: r,
+      el: document.getElementById(`ribbon-${r.id}`),
+      x: 0
+    }))
 
-      {/* ── 2. Cinematic depth light — very subtle, mostly behind the card/mesh ── */}
-      <div
-        className="absolute"
-        style={{
-          width: '800px',
-          height: '600px',
-          bottom: '-100px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'radial-gradient(ellipse, rgba(255,20,40,0.12) 0%, rgba(180,10,30,0.04) 40%, transparent 70%)',
-          filter: 'blur(80px)',
-        }}
-      />
-
-      {/* ── 3. Polygon mesh SVG — concentrated at the bottom ── */}
-      <svg
-        className="absolute inset-0 w-full h-full"
-        viewBox="0 0 100 100"
-        preserveAspectRatio="xMidYMid slice"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          {/* Vertical mask: opaque at bottom, fading quickly to transparent at top */}
-          <linearGradient id="meshGrad" x1="0%" y1="100%" x2="0%" y2="0%">
-            <stop offset="0%"   stopColor="white" stopOpacity="0.8" />
-            <stop offset="25%"  stopColor="white" stopOpacity="0.4" />
-            <stop offset="45%"  stopColor="white" stopOpacity="0.08" />
-            <stop offset="65%"  stopColor="white" stopOpacity="0" />
-          </linearGradient>
-          <mask id="meshMask">
-            <rect width="100" height="100" fill="url(#meshGrad)" />
-          </mask>
-
-          {/* Very subtle glow for nodes/edges */}
-          <filter id="subtleGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="0.8" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        <g mask="url(#meshMask)">
-          {/* Mesh edges */}
-          {EDGES.map(([a, b], i) => (
-            <line
-              key={`edge-${i}`}
-              x1={NODES[a][0]} y1={NODES[a][1]}
-              x2={NODES[b][0]} y2={NODES[b][1]}
-              stroke="rgba(255,40,60,0.35)"
-              strokeWidth="0.12"
-            />
-          ))}
-
-          {/* Accent edges for depth */}
-          {EDGES.filter((_, i) => i % 5 === 0).map(([a, b], i) => (
-            <line
-              key={`acc-${i}`}
-              x1={NODES[a][0]} y1={NODES[a][1]}
-              x2={NODES[b][0]} y2={NODES[b][1]}
-              stroke="rgba(255,50,70,0.6)"
-              strokeWidth="0.18"
-              filter="url(#subtleGlow)"
-            />
-          ))}
-
-          {/* Nodes */}
-          {NODES.map(([x, y], i) => (
-            <circle
-              key={`node-${i}`}
-              cx={x} cy={y}
-              r={i % 4 === 0 ? 0.35 : 0.2}
-              fill={i % 4 === 0 ? 'rgba(255,60,80,0.9)' : 'rgba(255,40,60,0.6)'}
-              filter={i % 4 === 0 ? 'url(#subtleGlow)' : 'none'}
-            />
-          ))}
-        </g>
-      </svg>
+    const renderLoop = (time: number) => {
+      const elapsed = time - startTime
       
-      {/* ── 4. Tiny subtle particles, static but glowing softly ── */}
-      <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <filter id="particleGlow"><feGaussianBlur stdDeviation="0.4" /></filter>
-        </defs>
-        <g opacity="0.4">
-          <circle cx="20" cy="80" r="0.15" fill="#ff2d55" filter="url(#particleGlow)" />
-          <circle cx="75" cy="85" r="0.2" fill="#ff2d55" filter="url(#particleGlow)" />
-          <circle cx="85" cy="65" r="0.1" fill="#ff2d55" filter="url(#particleGlow)" />
-          <circle cx="35" cy="70" r="0.12" fill="#ff2d55" filter="url(#particleGlow)" />
-          <circle cx="60" cy="90" r="0.18" fill="#ff2d55" filter="url(#particleGlow)" />
-        </g>
-      </svg>
+      ribbons.forEach(ribbon => {
+        if (!ribbon.el) return
+        const c = ribbon.config
+        
+        // 1. Horizontal movement (Loops perfectly at exactly 1 wavelength)
+        ribbon.x -= c.speed
+        if (ribbon.x <= -c.wavelength) {
+           ribbon.x += c.wavelength
+        }
+        
+        // 2. Breathing opacity
+        // Math.sin oscillates -1 to 1. We map it to -opacityVar to +opacityVar
+        const currentOpacity = c.opacityBase + Math.sin(elapsed * c.opacitySpeed) * c.opacityVar
+        
+        // 3. Morphing scaleY
+        const currentScaleY = 1 + Math.sin(elapsed * c.scaleYSpeed) * 0.15
+        
+        // Apply GPU accelerated transforms
+        ribbon.el.style.transform = `translate3d(${ribbon.x}px, 0, 0) scaleY(${currentScaleY})`
+        ribbon.el.style.opacity = currentOpacity.toFixed(3)
+      })
+
+      animationFrameId = requestAnimationFrame(renderLoop)
+    }
+
+    animationFrameId = requestAnimationFrame(renderLoop)
+    return () => cancelAnimationFrame(animationFrameId)
+  }, [])
+
+  return (
+    <div 
+      className="fixed inset-0 w-full h-full overflow-hidden pointer-events-none" 
+      aria-hidden="true"
+      style={{ background: '#080808', zIndex: 0 }}
+    >
+      {/* Container for ribbons, vertically centered */}
+      <div 
+        ref={containerRef}
+        className="absolute w-full h-full flex items-center" 
+        style={{ top: '0', left: '0' }}
+      >
+        {RIBBONS.map(r => {
+          const pathD = generateSinePath(r.amplitude, r.wavelength)
+          
+          return (
+            <div
+              key={r.id}
+              id={`ribbon-${r.id}`}
+              className="absolute left-0 will-change-transform"
+              style={{
+                filter: `blur(${r.blur}px)`,
+                mixBlendMode: 'screen', // Additive blending
+                width: '6000px', // matches path length
+                height: '0px', // paths are drawn relative to center
+              }}
+            >
+              <svg 
+                width="6000" 
+                height="2000" 
+                viewBox="0 -1000 6000 2000" 
+                className="overflow-visible absolute"
+                style={{ top: '-1000px', left: '0' }}
+              >
+                {/* Outer large bloom */}
+                <path 
+                  d={pathD} 
+                  fill="none" 
+                  stroke={r.color} 
+                  strokeWidth={r.glowThickness * 2} 
+                  strokeLinecap="round" 
+                  opacity="0.15" 
+                />
+                {/* Soft outer glow */}
+                <path 
+                  d={pathD} 
+                  fill="none" 
+                  stroke={r.color} 
+                  strokeWidth={r.glowThickness} 
+                  strokeLinecap="round" 
+                  opacity="0.4" 
+                />
+                {/* Bright core */}
+                <path 
+                  d={pathD} 
+                  fill="none" 
+                  stroke={r.color} 
+                  strokeWidth={r.thickness} 
+                  strokeLinecap="round" 
+                  opacity="1" 
+                />
+              </svg>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -209,7 +239,7 @@ export default function Login({ onLogin }: LoginProps) {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#050505]">
+    <div className="relative flex min-h-screen items-center justify-center overflow-x-hidden overflow-y-auto bg-[#050505] py-8">
       <LoginBackground />
 
       {/* ══════════════════════════════════════════════════════════════
@@ -275,10 +305,10 @@ export default function Login({ onLogin }: LoginProps) {
           {/* ═════════════════════════════════════════════════════
               CARD CONTENT
           ═════════════════════════════════════════════════════ */}
-          <div style={{ padding: '48px 36px 36px' }}>
+          <div style={{ padding: '40px 32px 32px' }}>
 
             {/* ── Logo Section ── */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', marginBottom: '36px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
 
               {/* Logo Container - Rounded Rectangle with soft glow */}
               <div style={{ position: 'relative' }}>
@@ -297,8 +327,8 @@ export default function Login({ onLogin }: LoginProps) {
                 
                 <div
                   style={{
-                    width: '60px',
-                    height: '60px',
+                    width: '52px',
+                    height: '52px',
                     borderRadius: '16px',
                     background: 'linear-gradient(145deg, rgba(30,25,28,0.8) 0%, rgba(15,10,12,0.9) 100%)',
                     border: '1px solid rgba(255,45,85,0.25)',
@@ -312,7 +342,7 @@ export default function Login({ onLogin }: LoginProps) {
                   <img
                     src="/logo/arqon-new-logo.png"
                     alt="Arqon"
-                    style={{ width: '32px', height: '32px', objectFit: 'contain', position: 'relative', zIndex: 1 }}
+                    style={{ width: '28px', height: '28px', objectFit: 'contain', position: 'relative', zIndex: 1 }}
                   />
                 </div>
               </div>
@@ -352,7 +382,7 @@ export default function Login({ onLogin }: LoginProps) {
               style={{
                 height: '1px',
                 background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)',
-                marginBottom: '32px',
+                marginBottom: '24px',
               }}
             />
 
@@ -550,23 +580,24 @@ export default function Login({ onLogin }: LoginProps) {
 
           {/* ── Card footer ── */}
           <div
+            className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 sm:gap-x-4"
             style={{
-              padding: '16px 36px 20px',
-              textAlign: 'center',
+              padding: '16px 24px 24px',
               borderTop: '1px solid rgba(255,255,255,0.04)',
               background: 'rgba(0,0,0,0.15)',
             }}
           >
-            <p
-              style={{
-                fontSize: '10.5px',
-                color: 'rgba(255,255,255,0.25)',
-                fontFamily: "'Inter', sans-serif",
-                letterSpacing: '0.02em',
-              }}
-            >
-              Single-operator admin console &mdash; v2.4.1
-            </p>
+            <button onClick={() => window.location.href='/terms'} className="login-footer-link">
+              Terms & Conditions
+            </button>
+            <span className="hidden sm:inline text-white/20 text-[10px]">•</span>
+            <button onClick={() => window.location.href='/privacy'} className="login-footer-link">
+              Privacy Policy
+            </button>
+            <span className="hidden sm:inline text-white/20 text-[10px]">•</span>
+            <button onClick={() => window.location.href='/help'} className="login-footer-link">
+              Help Center
+            </button>
           </div>
         </div>
       </div>

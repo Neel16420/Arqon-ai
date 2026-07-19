@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import Login from './pages/Login'
+import Terms from './pages/Terms'
+import Help from './pages/Help'
+import Privacy from './pages/Privacy'
 import Overview from './pages/Overview'
 import Providers from './pages/Providers'
 import Logs from './pages/Logs'
@@ -118,6 +121,18 @@ export default function App() {
   }, [])
   // Initialize theme tracking
   useTheme()
+
+  if (window.location.pathname === '/terms') {
+    return <Terms />
+  }
+  
+  if (window.location.pathname === '/privacy') {
+    return <Privacy />
+  }
+
+  if (window.location.pathname === '/help') {
+    return <Help />
+  }
 
   if (!session.isAuthenticated) {
     return <Login onLogin={(session) => login(session)} />
