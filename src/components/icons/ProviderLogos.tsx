@@ -48,16 +48,43 @@ export function AzureIcon(props: React.SVGProps<SVGSVGElement>) {
   )
 }
 
+export function GroqIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4a6 6 0 0 1 6 6h-3a3 3 0 0 0-3-3V6zm0 12a6 6 0 0 1-6-6h3a3 3 0 0 0 3 3v3z" />
+    </svg>
+  )
+}
+
+export function OpenRouterIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M4 6h10v2H4V6zm0 5h16v2H4v-2zm0 5h10v2H4v-2z" />
+    </svg>
+  )
+}
+
+export function DeepSeekIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+    </svg>
+  )
+}
+
 export function ProviderIcon({ type, ...props }: { type: string } & React.SVGProps<SVGSVGElement>) {
   switch (type.toLowerCase()) {
-    case 'openai': return <OpenAIIcon {...props} />
-    case 'anthropic': return <AnthropicIcon {...props} />
-    case 'google': return <GeminiIcon {...props} />
-    case 'google ai': return <GeminiIcon {...props} />
-    case 'mistral': return <MistralIcon {...props} />
-    case 'cohere': return <CohereIcon {...props} />
-    case 'azure': return <AzureIcon {...props} />
+    case 'openai':      return <OpenAIIcon {...props} />
+    case 'anthropic':   return <AnthropicIcon {...props} />
+    case 'google':      return <GeminiIcon {...props} />
+    case 'google ai':   return <GeminiIcon {...props} />
+    case 'mistral':     return <MistralIcon {...props} />
+    case 'cohere':      return <CohereIcon {...props} />
+    case 'azure':       return <AzureIcon {...props} />
     case 'azure openai': return <AzureIcon {...props} />
-    default: return <OpenAIIcon {...props} />
+    case 'groq':        return <GroqIcon {...props} />
+    case 'openrouter':  return <OpenRouterIcon {...props} />
+    case 'deepseek':    return <DeepSeekIcon {...props} />
+    default:            return <OpenAIIcon {...props} />
   }
 }

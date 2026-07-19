@@ -69,21 +69,6 @@ const systemStatus = [
   { name: 'Provider Connectors', status: 'warning', uptime: '99.71%' },
 ]
 
-const routingNodes = [
-  { name: 'OpenAI', pct: '38%', x: 250, y: 48, color: '#10A37F' },
-  { name: 'Anthropic', pct: '27%', x: 368, y: 109, color: '#D97706' },
-  { name: 'Google', pct: '18%', x: 368, y: 231, color: '#4285F4' },
-  { name: 'Mistral', pct: '9%', x: 250, y: 292, color: '#7C3AED' },
-  { name: 'Cohere', pct: '5%', x: 132, y: 231, color: '#E11D48' },
-  { name: 'Azure', pct: '3%', x: 132, y: 109, color: '#0078D4' },
-]
-
-const hexagonPoints = (cx: number, cy: number, r: number) =>
-  Array.from({ length: 6 }, (_, i) => {
-    const a = (Math.PI / 180) * (60 * i - 90)
-    return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`
-  }).join(' ')
-
 function MiniSparkline({
   data,
   color = 'var(--color-accent)',
@@ -333,15 +318,15 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 const quickActions = [
-  { icon: <FileText size={16} />, label: 'View Logs', desc: 'Browse request history' },
-  { icon: <Server size={16} />, label: 'Manage Providers', desc: 'Configure AI providers' },
-  { icon: <Zap size={16} />, label: 'Routing Rules', desc: 'Edit routing logic' },
-  { icon: <Shield size={16} />, label: 'API Keys', desc: 'Manage gateway keys' },
-  { icon: <Activity size={16} />, label: 'Analytics', desc: 'View usage metrics' },
-  { icon: <Settings size={16} />, label: 'Settings', desc: 'Platform configuration' },
+  { icon: <FileText size={16} />, label: 'View Logs', desc: 'Browse request history', route: 'logs' },
+  { icon: <Server size={16} />, label: 'Manage Providers', desc: 'Configure AI providers', route: 'providers' },
+  { icon: <Zap size={16} />, label: 'Routing Rules', desc: 'Edit routing logic', route: 'routing' },
+  { icon: <Shield size={16} />, label: 'API Keys', desc: 'Manage gateway keys', route: 'api-keys' },
+  { icon: <Activity size={16} />, label: 'Analytics', desc: 'View usage metrics', route: 'analytics' },
+  { icon: <Settings size={16} />, label: 'Settings', desc: 'Platform configuration', route: 'settings' },
 ]
 
-export default function Overview({ navigate }: { navigate?: (page: string) => void }) {
+export default function Overview({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const [chartRange, setChartRange] = useState<'day' | 'week' | 'month'>('day')
 
   const chartData =
@@ -492,7 +477,17 @@ export default function Overview({ navigate }: { navigate?: (page: string) => vo
               {quickActions.slice(0, 4).map((a) => (
                 <button
                   key={a.label}
-                  className="hover-lift flex flex-col items-start gap-1 p-2.5 rounded-lg text-left transition-colors hover:border-border-2"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Navigate to ${a.label}`}
+                  onClick={() => onNavigate?.(a.route)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      onNavigate?.(a.route)
+                    }
+                  }}
+                  className="hover-lift flex flex-col items-start gap-1 p-2.5 rounded-lg text-left transition-colors hover:border-border-2 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
                   style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border)' }}
                   onMouseEnter={(e) =>
                     (e.currentTarget.style.border = '1px solid var(--color-border-2)')

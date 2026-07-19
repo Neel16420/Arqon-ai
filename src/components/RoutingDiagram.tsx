@@ -18,11 +18,10 @@
  */
 
 import { useState, useCallback } from 'react'
-import { usePacketAnimation } from '../motion/usePacketAnimation'
 import { useEngineBreath } from '../motion/useEngineBreath'
 import { useReducedMotion } from '../motion/useReducedMotion'
-import { ROUTE, PACKET, ENGINE } from '../motion/motionTokens'
-import type { RouteNode } from '../motion/usePacketAnimation'
+import { ROUTE, ENGINE } from '../motion/motionTokens'
+export interface RouteNode { name: string; color: string; x: number; y: number }
 import { ProviderIcon } from './icons/ProviderLogos'
 
 // ─── Static data (mirrors Overview.tsx routingNodes) ──────────────────────────
@@ -77,9 +76,14 @@ function RouteArm({
   isDimmed: boolean
   onClick: () => void
 }) {
-  const opacity = isDimmed ? ROUTE.inactiveOpacity : ROUTE.activeOpacity
-  const strokeWidth = isActive ? ROUTE.activeStrokeWidth : 1.2
-  const transition = `opacity ${ROUTE.switchDuration}ms cubic-bezier(0.16,1,0.3,1), stroke-width ${ROUTE.switchDuration}ms ease`
+  const opacity = isDimmed ? 0.20 : 1
+  const strokeWidth = isActive ? 1.5 : 1.2
+
+  // Reverse path: Provider -> Engine
+  const basePath = `M ${CURVE_END_X} ${rowY} C ${(HEX_RIGHT_X + CURVE_END_X) / 2} ${rowY}, ${(HEX_RIGHT_X + CURVE_END_X) / 2} ${ENGINE_POS.y}, ${HEX_RIGHT_X} ${ENGINE_POS.y}`
+  
+  // Full path: Provider -> Engine -> Application
+  const fullPath = `M ${CURVE_END_X} ${rowY} C ${(HEX_RIGHT_X + CURVE_END_X) / 2} ${rowY}, ${(HEX_RIGHT_X + CURVE_END_X) / 2} ${ENGINE_POS.y}, ${HEX_RIGHT_X} ${ENGINE_POS.y} L ${APP_POS.x + 60} ${APP_POS.y}`
 
   return (
     <g
@@ -92,26 +96,49 @@ function RouteArm({
       } as React.CSSProperties}
       onClick={onClick}
     >
-      {/* Bezier curve: engine right edge → provider */}
+      {/* Base curve (static, no glow) */}
       <path
-        d={`M ${HEX_RIGHT_X} ${ENGINE_POS.y} C ${(HEX_RIGHT_X + CURVE_END_X) / 2} ${ENGINE_POS.y}, ${(HEX_RIGHT_X + CURVE_END_X) / 2} ${rowY}, ${CURVE_END_X} ${rowY}`}
+        d={basePath}
         fill="none"
         stroke={provider.color}
         strokeWidth={strokeWidth}
-        strokeDasharray={isActive ? 'none' : '2 3'}
-        style={{ transition }}
+        style={{ transition: `stroke-width ${ROUTE.switchDuration}ms ease` }}
       />
-
-      {/* Active route glow line (behind the main line) */}
+      
+      {/* If active, draw the full path to App and the animated orb */}
       {isActive && (
-        <path
-          d={`M ${HEX_RIGHT_X} ${ENGINE_POS.y} C ${(HEX_RIGHT_X + CURVE_END_X) / 2} ${ENGINE_POS.y}, ${(HEX_RIGHT_X + CURVE_END_X) / 2} ${rowY}, ${CURVE_END_X} ${rowY}`}
-          fill="none"
-          stroke={provider.color}
-          strokeWidth={6}
-          opacity={0.12}
-          style={{ filter: 'blur(3px)' }}
-        />
+        <>
+          {/* Static full line overlay to ensure ARQON -> App has the active color */}
+          <path
+            d={fullPath}
+            fill="none"
+            stroke={provider.color}
+            strokeWidth={1.5}
+          />
+          {/* Outer glow orb */}
+          <path
+            d={fullPath}
+            fill="none"
+            stroke={provider.color}
+            strokeWidth={12}
+            opacity={0.3}
+            strokeLinecap="round"
+            pathLength="100"
+            className="routing-pulse-orb"
+            style={{ filter: 'blur(4px)' }}
+          />
+          {/* Core orb */}
+          <path
+            d={fullPath}
+            fill="none"
+            stroke={provider.color}
+            strokeWidth={4}
+            opacity={1}
+            strokeLinecap="round"
+            pathLength="100"
+            className="routing-pulse-orb"
+          />
+        </>
       )}
 
       {/* Entry dot at curve end */}
@@ -195,8 +222,6 @@ export default function RoutingDiagram() {
   const [activeIndex, setActiveIndex] = useState<number>(0)
   const activeProvider = PROVIDERS[activeIndex]
 
-  // Packet animation — drives req/res SVG circles via rAF
-  const { reqRef, resRef } = usePacketAnimation(activeProvider, ENGINE_POS, APP_POS)
 
   // Engine heartbeat — drives scale + glow via rAF
   const { ref: engineRef, glowRef: engineGlowRef } = useEngineBreath()
@@ -248,6 +273,16 @@ export default function RoutingDiagram() {
               <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.8" />
               <stop offset="100%" stopColor={activeProvider.color} stopOpacity="0.8" />
             </linearGradient>
+            <style>{`
+              @keyframes route-orb-pulse {
+                from { stroke-dashoffset: 135; }
+                to   { stroke-dashoffset: 0; }
+              }
+              .routing-pulse-orb {
+                animation: route-orb-pulse 2.8s infinite linear;
+                stroke-dasharray: 1 134;
+              }
+            `}</style>
           </defs>
 
           {/* ── App → Engine connector ──────────────────────────────── */}
@@ -387,32 +422,7 @@ export default function RoutingDiagram() {
             Orchestration Engine
           </text>
 
-          {/* ── Animated Packets ────────────────────────────────────── */}
-
-          {/* REQUEST packet: App → Engine → Provider */}
-          <circle
-            ref={reqRef}
-            cx={APP_POS.x}
-            cy={APP_POS.y}
-            r={PACKET.radius}
-            fill={activeProvider.color}
-            opacity="0"
-            filter="url(#arqon-pkt-req-glow)"
-            style={{ willChange: 'transform' }}
-          />
-
-          {/* RESPONSE packet: Provider → Engine → App */}
-          {/* Slightly smaller, more transparent — distinct visual treatment */}
-          <circle
-            ref={resRef}
-            cx={APP_POS.x}
-            cy={APP_POS.y}
-            r={PACKET.radius - 1.5}
-            fill="var(--color-foreground)"
-            opacity="0"
-            filter="url(#arqon-pkt-res-glow)"
-            style={{ willChange: 'transform' }}
-          />
+          {/* ── Animated Packets (Replaced by CSS Path Animation) ── */}
 
           {/* ── "Click to select" hint ─────────────────────────────── */}
           <text

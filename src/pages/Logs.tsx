@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Search, Filter, X, ChevronRight, AlertCircle, CheckCircle, Clock, Copy, Check } from 'lucide-react'
+import { Search, Filter, X, ChevronRight, AlertCircle, CheckCircle, Copy, Check } from 'lucide-react'
 import { formatLatency } from '../utils'
 import { useStaggeredList } from '../motion/useStaggeredList'
 
@@ -257,12 +257,12 @@ export default function Logs() {
 
         {/* Table */}
         <div
-          className="rounded-xl overflow-hidden"
+          className="rounded-xl"
           style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
         >
           {/* Desktop table */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="hidden md:block overflow-x-auto px-4 pb-4">
+            <table className="w-full text-sm" style={{ borderCollapse: "separate", borderSpacing: "0 8px" }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
                   <th className="text-left px-4 py-3 text-xs font-medium text-muted">Request ID</th>
@@ -315,15 +315,23 @@ export default function Logs() {
                   paginated.map((row, i) => (
                     <tr
                       key={row.id}
-                      className="cursor-pointer transition-colors animate-fade-in-up"
+                      className={`group cursor-pointer animate-fade-in-up transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm [&>td:first-child]:rounded-l-xl [&>td:last-child]:rounded-r-xl relative ${selected?.id === row.id ? 'shadow-sm' : ''}`}
                       style={{
                         ...getStaggerDelay(i),
-                        borderBottom: i < paginated.length - 1 ? '1px solid #1C1C1E' : 'none',
                         background: selected?.id === row.id ? 'var(--color-surface-2)' : 'transparent',
+                        boxShadow: selected?.id === row.id ? 'inset 2px 0 0 var(--color-accent)' : 'none',
                       }}
                       onClick={() => setSelected(selected?.id === row.id ? null : row)}
-                      onMouseEnter={(e) => { if (selected?.id !== row.id) e.currentTarget.style.background = 'var(--color-surface-2)' }}
-                      onMouseLeave={(e) => { if (selected?.id !== row.id) e.currentTarget.style.background = 'transparent' }}
+                      onMouseEnter={(e) => {
+                        if (selected?.id !== row.id) {
+                          e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selected?.id !== row.id) {
+                          e.currentTarget.style.background = 'transparent'
+                        }
+                      }}
                     >
                       <td className="px-4 py-3">
                         <span
@@ -373,7 +381,7 @@ export default function Logs() {
           </div>
 
           {/* Mobile card list */}
-          <div className="md:hidden divide-y" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="md:hidden flex flex-col gap-2 p-2">
             {paginated.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-sm text-muted">No results</p>
@@ -382,12 +390,23 @@ export default function Logs() {
               paginated.map((row, i) => (
                 <div
                   key={row.id}
-                  className="px-4 py-3 cursor-pointer animate-fade-in-up"
+                  className="px-4 py-3 rounded-xl cursor-pointer animate-fade-in-up transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                   style={{ 
                     ...getStaggerDelay(i),
-                    background: selected?.id === row.id ? 'var(--color-surface-2)' : 'transparent' 
+                    background: selected?.id === row.id ? 'var(--color-surface-2)' : 'transparent',
+                    borderLeft: selected?.id === row.id ? '2px solid var(--color-accent)' : '2px solid transparent'
                   }}
                   onClick={() => setSelected(selected?.id === row.id ? null : row)}
+                  onMouseEnter={(e) => {
+                    if (selected?.id !== row.id) {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (selected?.id !== row.id) {
+                      e.currentTarget.style.background = 'transparent'
+                    }
+                  }}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span

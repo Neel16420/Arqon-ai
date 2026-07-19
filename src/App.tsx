@@ -1,9 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Login from './pages/Login'
 import Overview from './pages/Overview'
 import Providers from './pages/Providers'
 import Logs from './pages/Logs'
 import Settings from './pages/Settings'
+import ApiKeys from './pages/ApiKeys'
+import Routing from './pages/Routing'
+import Requests from './pages/Requests'
 import ComingSoon from './pages/ComingSoon'
 import Sidebar, { type Page } from './components/Sidebar'
 import Header from './components/Header'
@@ -20,29 +23,15 @@ function PageTransition({ pageKey, children }: { pageKey: string; children: Reac
 }
 
 const P1_META: Record<string, { title: string; desc: string; eta: string }> = {
-  requests: {
-    title: 'Real-time Request Stream',
-    desc: 'A live-updating feed of every request flowing through Arqon, with sub-second granularity and streaming SSE push. Backend work in progress.',
-    eta: 'Q1 2025',
-  },
   models: {
     title: 'Model Catalog',
     desc: 'Browse and filter every available model across all connected providers — context length, capabilities (vision, audio, tool-calling), pricing, and enable/disable toggles.',
     eta: 'Q1 2025',
   },
-  routing: {
-    title: 'Routing Rule Builder',
-    desc: 'Visual priority ordering, failover chains, retry/cooldown settings, and a simulator to preview the predicted route before deploying changes.',
-    eta: 'Q1 2025',
-  },
+
   analytics: {
     title: 'Analytics Dashboard',
     desc: 'Requests per hour, provider usage share, latency percentiles, failure rates, token consumption, and estimated cost — all with configurable date ranges.',
-    eta: 'Q2 2025',
-  },
-  'api-keys': {
-    title: 'API Key Management',
-    desc: 'Dedicated key management with scope-based permissions, expiration dates, and per-key usage metrics. Until then, manage keys in Settings.',
     eta: 'Q2 2025',
   },
   playground: {
@@ -102,7 +91,31 @@ function AppLayout({ children, activePage, setActivePage, onLogout }: {
 
 export default function App() {
   const { session, login, logout } = useAuth()
-  const [activePage, setActivePage] = useState<Page>('overview')
+  const getPathPage = (): Page => {
+    const path = window.location.pathname.substring(1)
+    const validPages: Page[] = ['overview', 'providers', 'logs', 'settings', 'requests', 'models', 'routing', 'analytics', 'api-keys', 'playground']
+    return validPages.includes(path as Page) ? (path as Page) : 'overview'
+  }
+
+  const [activePage, _setActivePage] = useState<Page>(getPathPage)
+
+  useEffect(() => {
+    const onPopState = () => {
+      _setActivePage(getPathPage())
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
+  const setActivePage = useCallback((page: Page) => {
+    _setActivePage((prev) => {
+      if (prev !== page) {
+        window.history.pushState(null, '', `/${page}`)
+        return page
+      }
+      return prev
+    })
+  }, [])
   // Initialize theme tracking
   useTheme()
 
@@ -115,10 +128,13 @@ export default function App() {
   return (
     <AppLayout activePage={activePage} setActivePage={setActivePage} onLogout={logout}>
       <PageTransition pageKey={activePage}>
-        {activePage === 'overview' && <Overview />}
+        {activePage === 'overview' && <Overview onNavigate={setActivePage as any} />}
         {activePage === 'providers' && <Providers />}
         {activePage === 'logs' && <Logs />}
         {activePage === 'settings' && <Settings />}
+        {activePage === 'api-keys' && <ApiKeys />}
+        {activePage === 'routing' && <Routing />}
+        {activePage === 'requests' && <Requests />}
         {p1Meta && (
           <ComingSoon
             title={p1Meta.title}

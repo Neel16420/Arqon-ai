@@ -11,10 +11,8 @@ import {
   WifiOff,
   ChevronUp,
   ChevronDown,
-  MoreHorizontal,
   Loader,
 } from 'lucide-react'
-import { formatLatency } from '../utils'
 import { useCountUp } from '../motion/useCountUp'
 import { useReducedMotion } from '../motion/useReducedMotion'
 import { ProviderIcon } from '../components/icons/ProviderLogos'
@@ -422,7 +420,6 @@ function AddProviderModal({ onClose, onAdd }: AddProviderModalProps) {
 export default function Providers() {
   const [providers, setProviders] = useState<Provider[]>(initialProviders)
   const [showAddModal, setShowAddModal] = useState(false)
-  const [dragOver, setDragOver] = useState<string | null>(null)
   
   // Animation state for progress bars
   const [animated, setAnimated] = useState(false)
@@ -497,7 +494,7 @@ export default function Providers() {
             className="relative flex flex-col gap-4 p-5 rounded-xl hover-lift cursor-default"
             style={{
               background: 'var(--color-surface)',
-              border: dragOver === provider.id ? '1px solid var(--color-border-2)' : '1px solid var(--color-border)',
+              border: '1px solid var(--color-border)',
               opacity: provider.enabled ? 1 : 0.6,
             }}
           >

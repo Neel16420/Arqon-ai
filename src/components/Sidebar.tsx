@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
-import { X, LayoutDashboard, Server, FileText, Settings, Activity, Layers, GitBranch, BarChart2, Key, Terminal, Zap } from 'lucide-react'
+import type React from 'react'
+import { X, LayoutDashboard, Server, FileText, Settings, Activity, Layers, GitBranch, BarChart2, Key, Terminal } from 'lucide-react'
 import { cn } from '../utils'
-import { useReducedMotion } from '../motion/useReducedMotion'
+import TokenMonitorCard from './TokenMonitorCard'
 export type Page =
   | 'overview'
   | 'providers'
@@ -23,17 +23,17 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={18} /> },
+  { id: 'requests', label: 'Requests', icon: <Activity size={18} /> },
   { id: 'providers', label: 'Providers', icon: <Server size={18} /> },
   { id: 'logs', label: 'Logs', icon: <FileText size={18} /> },
   { id: 'settings', label: 'Settings', icon: <Settings size={18} /> },
+  { id: 'api-keys', label: 'API Keys', icon: <Key size={18} /> },
+  { id: 'routing', label: 'Routing', icon: <GitBranch size={18} /> },
 ]
 
 const p1Items: NavItem[] = [
-  { id: 'requests', label: 'Requests', icon: <Activity size={18} />, p1: true },
   { id: 'models', label: 'Models', icon: <Layers size={18} />, p1: true },
-  { id: 'routing', label: 'Routing', icon: <GitBranch size={18} />, p1: true },
   { id: 'analytics', label: 'Analytics', icon: <BarChart2 size={18} />, p1: true },
-  { id: 'api-keys', label: 'API Keys', icon: <Key size={18} />, p1: true },
   { id: 'playground', label: 'Playground', icon: <Terminal size={18} />, p1: true },
 ]
 
@@ -84,20 +84,6 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activePage, setActivePage, open, onClose }: SidebarProps) {
-  // Animation state for progress bars
-  const [animated, setAnimated] = useState(false)
-  const reduced = useReducedMotion()
-  
-  useEffect(() => {
-    if (reduced) {
-      setAnimated(true)
-      return
-    }
-    const timer = setTimeout(() => {
-      setAnimated(true)
-    }, 50)
-    return () => clearTimeout(timer)
-  }, [reduced])
 
   const handleNav = (page: Page, e: React.MouseEvent<HTMLButtonElement>) => {
     // Immediately release focus from the clicked button so the browser never
@@ -214,44 +200,9 @@ export default function Sidebar({ activePage, setActivePage, open, onClose }: Si
           </div>
         </nav>
 
-        {/* Plan card */}
+        {/* Token Monitor card */}
         <div className="px-2 py-3" style={{ borderTop: '1px solid var(--color-sidebar-border-right)' }}>
-          <div
-            className="hidden lg:block p-3 rounded-lg mb-2"
-            style={{ 
-              background: 'var(--color-sidebar-card-bg)', 
-              border: 'var(--color-sidebar-card-border)',
-              boxShadow: 'var(--color-sidebar-card-shadow)'
-            }}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium" style={{ color: 'var(--color-sidebar-text-active)' }}>Pro Plan</span>
-              <span
-                className="text-xs px-1.5 py-0.5 rounded-full"
-                style={{ background: 'rgb(var(--color-success-rgb) / 0.1)', color: 'var(--color-success)', fontFamily: "'JetBrains Mono', monospace", fontSize: '10px' }}
-              >
-                Active
-              </span>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs" style={{ color: 'var(--color-sidebar-text-inactive)' }}>Requests</span>
-                <span className="text-xs" style={{ color: 'var(--color-sidebar-text-inactive)', fontFamily: "'JetBrains Mono', monospace" }}>
-                  2.47M / 5M
-                </span>
-              </div>
-              <div className="w-full h-1 rounded-full overflow-hidden" style={{ background: 'var(--color-sidebar-border-right)' }}>
-                <div 
-                  className="h-full rounded-full" 
-                  style={{ 
-                    width: `${animated ? 49 : 0}%`, 
-                    background: 'var(--color-accent)',
-                    transition: 'width 1.2s cubic-bezier(0.22, 0.61, 0.36, 1) 150ms'
-                  }} 
-                />
-              </div>
-            </div>
-          </div>
+          <TokenMonitorCard />
 
           {/* Account */}
           <div className="flex items-center gap-3 px-1 py-1 rounded-lg cursor-pointer hover:bg-[var(--color-sidebar-item-hover-bg)] transition-colors">
