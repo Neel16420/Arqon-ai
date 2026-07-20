@@ -24,17 +24,14 @@ interface NavItem {
 const navItems: NavItem[] = [
   { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={18} /> },
   { id: 'requests', label: 'Requests', icon: <Activity size={18} /> },
+  { id: 'models', label: 'Models', icon: <Layers size={18} /> },
+  { id: 'analytics', label: 'Analytics', icon: <BarChart2 size={18} /> },
   { id: 'providers', label: 'Providers', icon: <Server size={18} /> },
   { id: 'logs', label: 'Logs', icon: <FileText size={18} /> },
   { id: 'settings', label: 'Settings', icon: <Settings size={18} /> },
   { id: 'api-keys', label: 'API Keys', icon: <Key size={18} /> },
   { id: 'routing', label: 'Routing', icon: <GitBranch size={18} /> },
-]
-
-const p1Items: NavItem[] = [
-  { id: 'models', label: 'Models', icon: <Layers size={18} />, p1: true },
-  { id: 'analytics', label: 'Analytics', icon: <BarChart2 size={18} />, p1: true },
-  { id: 'playground', label: 'Playground', icon: <Terminal size={18} />, p1: true },
+  { id: 'playground', label: 'Playground', icon: <Terminal size={18} /> },
 ]
 
 function ArqonLogo({ compact }: { compact: boolean }) {
@@ -172,32 +169,6 @@ export default function Sidebar({ activePage, setActivePage, open, onClose }: Si
             )
           })}
 
-          {/* Divider + P1 items */}
-          <div className="pt-2 mt-2" style={{ borderTop: '1px solid var(--color-sidebar-border-right)' }}>
-            <p className="text-xs font-medium px-3 py-1.5 hidden lg:block" style={{ color: 'var(--color-sidebar-text-inactive)', fontFamily: "'Inter', sans-serif", opacity: 0.7 }}>
-              Coming soon
-            </p>
-            {p1Items.map((item) => {
-              return (
-                <button
-                  key={item.id}
-                  tabIndex={-1}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all group cursor-not-allowed',
-                    'opacity-40'
-                  )}
-                >
-                  <span className="sidebar-icon transition-transform duration-200 text-[var(--color-sidebar-icon-inactive)]">{item.icon}</span>
-                  <span
-                    className="hidden lg:block font-medium truncate text-[var(--color-sidebar-text-inactive)]"
-                    style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px' }}
-                  >
-                    {item.label}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
         </nav>
 
         {/* Token Monitor card */}

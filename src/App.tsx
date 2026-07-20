@@ -10,6 +10,9 @@ import Settings from './pages/Settings'
 import ApiKeys from './pages/ApiKeys'
 import Routing from './pages/Routing'
 import Requests from './pages/Requests'
+import Models from './pages/Models'
+import Analytics from './pages/Analytics'
+import Playground from './pages/Playground'
 import ComingSoon from './pages/ComingSoon'
 import Sidebar, { type Page } from './components/Sidebar'
 import Header from './components/Header'
@@ -35,11 +38,6 @@ const P1_META: Record<string, { title: string; desc: string; eta: string }> = {
   analytics: {
     title: 'Analytics Dashboard',
     desc: 'Requests per hour, provider usage share, latency percentiles, failure rates, token consumption, and estimated cost — all with configurable date ranges.',
-    eta: 'Q2 2025',
-  },
-  playground: {
-    title: 'Interactive Playground',
-    desc: 'A chat-style console to test any model and provider directly — with streaming responses, per-request metadata, and side-by-side model comparison.',
     eta: 'Q2 2025',
   },
 }
@@ -150,6 +148,9 @@ export default function App() {
         {activePage === 'api-keys' && <ApiKeys />}
         {activePage === 'routing' && <Routing />}
         {activePage === 'requests' && <Requests />}
+        {activePage === 'models' && <Models />}
+        {activePage === 'analytics' && <Analytics />}
+        {activePage === 'playground' && <Playground />}
         {p1Meta && (
           <ComingSoon
             title={p1Meta.title}

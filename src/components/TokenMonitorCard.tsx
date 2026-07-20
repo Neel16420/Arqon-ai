@@ -267,7 +267,7 @@ function TokenMonitorPopup({ onClose, monitor }: PopupProps) {
               opacity: 0.5,
             }}
           >
-            Upgrade Plan — Coming Soon
+            Upgrade Plan
           </button>
         </div>
       </div>
