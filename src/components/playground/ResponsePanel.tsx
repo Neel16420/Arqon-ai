@@ -137,9 +137,16 @@ export function ResponsePanel({ content, setContent, isGenerating, onStop }: Res
     a.click()
   }
 
+  if (!content && !isGenerating) return null
+
   return (
-    <div className="flex flex-col h-full relative">
-      <div className="flex items-center justify-between mb-4 shrink-0">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className="flex flex-col relative w-full"
+    >
+      <div className="flex items-center justify-between mb-3 shrink-0">
         <h2 className="text-[11px] font-semibold text-muted uppercase tracking-widest">Response Output</h2>
         
         {content && (
@@ -157,14 +164,10 @@ export function ResponsePanel({ content, setContent, isGenerating, onStop }: Res
 
       <div 
         ref={scrollRef}
-        className="flex-1 bg-surface-2/30 border border-border/40 rounded-xl p-6 overflow-y-scroll custom-scrollbar relative"
+        className="bg-surface-2/30 border border-border/40 rounded-xl p-4 md:p-6 overflow-y-scroll custom-scrollbar relative"
+        style={{ minHeight: '350px', maxHeight: '500px' }}
       >
-        {!content && !isGenerating ? (
-          <div className="h-full flex items-center justify-center text-muted/50 text-sm">
-            AI output will appear here...
-          </div>
-        ) : (
-          <div className="prose prose-invert max-w-none text-sm text-foreground/90 leading-relaxed font-sans">
+        <div className="prose prose-invert max-w-none text-sm text-foreground/90 leading-relaxed font-sans pb-10">
             <ReactMarkdown
               remarkPlugins={MEMOIZED_PLUGINS}
               components={MEMOIZED_COMPONENTS}
@@ -185,29 +188,27 @@ export function ResponsePanel({ content, setContent, isGenerating, onStop }: Res
               )}
             </AnimatePresence>
           </div>
-        )}
-      </div>
-
-      {/* Floating Stop Button during generation */}
-      <AnimatePresence>
-        {isGenerating && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, x: '-50%' }}
-            animate={{ opacity: 1, y: 0, x: '-50%' }}
-            exit={{ opacity: 0, y: 10, x: '-50%' }}
-            className="absolute bottom-6 left-1/2"
-          >
-            <button 
-              onClick={onStop}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface border border-border hover:border-accent/50 text-sm text-foreground hover:text-accent shadow-lg transition-all group"
+        {/* Floating Stop Button during generation */}
+        <AnimatePresence>
+          {isGenerating && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, x: '-50%' }}
+              animate={{ opacity: 1, y: 0, x: '-50%' }}
+              exit={{ opacity: 0, y: 10, x: '-50%' }}
+              className="absolute bottom-6 left-1/2"
             >
-              <Square size={14} className="fill-current" />
-              Stop Generating
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+              <button 
+                onClick={onStop}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface border border-border hover:border-accent/50 text-sm text-foreground hover:text-accent shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition-all group"
+              >
+                <Square size={14} className="fill-current" />
+                Stop Generating
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
   )
 }
 

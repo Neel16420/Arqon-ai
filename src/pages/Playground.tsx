@@ -63,11 +63,11 @@ export default function Playground() {
         </button>
       </div>
 
-      {/* Main 3-Panel Workspace */}
+      {/* Main 2-Panel Workspace */}
       <div className="flex-1 flex overflow-hidden relative z-0">
         
-        {/* Left Panel: Provider & Model Selection */}
-        <div className="w-[280px] shrink-0 border-r border-border/40 overflow-y-auto custom-scrollbar flex flex-col h-full bg-surface-2/20">
+        {/* Left Panel: Provider & Model Selection (hidden on mobile/tablet) */}
+        <div className="hidden lg:flex w-[280px] shrink-0 border-r border-border/40 overflow-y-auto custom-scrollbar flex-col h-full bg-surface-2/20">
           <ProviderSidebar 
             selectedProvider={selectedProvider} 
             setSelectedProvider={setSelectedProvider}
@@ -76,24 +76,39 @@ export default function Playground() {
           />
         </div>
 
-        {/* Center Panel: Prompt Editor */}
-        <div className="flex-1 min-w-[300px] flex flex-col border-r border-border/40 bg-surface/10 p-6 overflow-hidden h-full">
-          <PromptEditor 
-            promptText={promptText}
-            setPromptText={setPromptText}
-            isGenerating={isGenerating}
-            onGenerate={handleGenerate}
-          />
-        </div>
+        {/* Center Workspace: Prompt & Response (scrollable) */}
+        <div className="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-surface/10 relative scroll-smooth">
+          <div className="max-w-5xl w-full mx-auto p-4 md:p-6 lg:p-8 flex flex-col gap-6 min-h-full">
+            
+            {/* Mobile/Tablet Provider Sidebar (rendered inline for single column) */}
+            <div className="lg:hidden flex flex-col w-full bg-surface-2/10 rounded-xl border border-border/40 overflow-hidden shrink-0 h-[400px] overflow-y-auto custom-scrollbar">
+              <ProviderSidebar 
+                selectedProvider={selectedProvider} 
+                setSelectedProvider={setSelectedProvider}
+                selectedModel={selectedModel}
+                setSelectedModel={setSelectedModel}
+              />
+            </div>
 
-        {/* Right Panel: Response Output */}
-        <div className="flex-1 min-w-[350px] flex flex-col bg-surface/20 p-6 overflow-hidden h-full relative">
-          <ResponsePanel 
-            content={responseContent}
-            setContent={setResponseContent}
-            isGenerating={isGenerating}
-            onStop={handleStop}
-          />
+            {/* Prompt Editor */}
+            <PromptEditor 
+              promptText={promptText}
+              setPromptText={setPromptText}
+              isGenerating={isGenerating}
+              onGenerate={handleGenerate}
+            />
+
+            {/* Response Output (only renders when there is content or generating) */}
+            <ResponsePanel 
+              content={responseContent}
+              setContent={setResponseContent}
+              isGenerating={isGenerating}
+              onStop={handleStop}
+            />
+            
+            {/* Extra padding at the bottom so users can scroll past the response easily */}
+            <div className="h-12 shrink-0"></div>
+          </div>
         </div>
 
       </div>

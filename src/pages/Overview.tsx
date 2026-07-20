@@ -24,6 +24,7 @@ import {
 import { formatNumber, formatLatency } from '../utils'
 import RoutingDiagram from '../components/RoutingDiagram'
 import { useCountUp } from '../motion/useCountUp'
+import TokenUsageCard from '../components/TokenUsageCard'
 
 const sparkData = {
   requests: [3200, 4100, 3800, 5200, 4800, 6100, 5900, 7200],
@@ -354,10 +355,11 @@ export default function Overview({ onNavigate }: { onNavigate?: (page: string) =
 
   return (
     <div className="space-y-6">
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          id="requests"
+      {/* Stat cards and Token Usage */}
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 xl:col-span-4 gap-4">
+          <StatCard
+            id="requests"
           icon={<Activity size={16} className="text-accent" />}
           label="Total Requests"
           value="2.47M"
@@ -405,6 +407,10 @@ export default function Overview({ onNavigate }: { onNavigate?: (page: string) =
           sparkData={sparkData.healthy}
           sparkColor="var(--color-warning)"
         />
+        </div>
+        <div className="xl:col-span-1">
+          <TokenUsageCard />
+        </div>
       </div>
 
       {/* Middle row: routing + system status */}

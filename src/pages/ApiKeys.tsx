@@ -2,10 +2,10 @@
  * ApiKeys.tsx - API Key Management Page
  * Uses the existing Arqon design system with premium UI tweaks.
  */
-import { useState, useCallback, useEffect, memo } from 'react'
+import { useState, useCallback, useEffect, memo, useRef } from 'react'
 import {
   Plus, Search, Eye, EyeOff, Copy, Check,
-  Trash2, Edit3, RefreshCw, X, Key, Shield, Clock, ShieldCheck,
+  Trash2, Edit3, RefreshCw, X, Key, Power, Clock, ShieldCheck,
   AlertTriangle, CheckCircle2, XCircle, FileText, Upload
 } from 'lucide-react'
 import { maskKey } from '../utils'
@@ -327,6 +327,157 @@ function ApiKeyModal({ isEdit, initialData, onSave, onClose }: {
   )
 }
 
+// ─── Refresh Action Button ────────────────────────────────────────────────────
+function RefreshActionButton({ onRefresh }: { onRefresh: () => void }) {
+  const [state, setState] = useState<'idle' | 'loading' | 'success'>('idle')
+  const [hover, setHover] = useState(false)
+  const onRefreshRef = useRef(onRefresh)
+
+  useEffect(() => {
+    onRefreshRef.current = onRefresh
+  }, [onRefresh])
+
+  useEffect(() => {
+    let t1: ReturnType<typeof setTimeout>
+    let t2: ReturnType<typeof setTimeout>
+    if (state === 'loading') {
+      t1 = setTimeout(() => {
+        setState('success')
+        onRefreshRef.current()
+      }, 1000)
+    } else if (state === 'success') {
+      t2 = setTimeout(() => {
+        setState('idle')
+      }, 500)
+    }
+    return () => {
+      clearTimeout(t1)
+      clearTimeout(t2)
+    }
+  }, [state])
+
+  const handleClick = () => {
+    if (state !== 'idle') return
+    setState('loading')
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={state !== 'idle'}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="p-2 rounded-full transition-all duration-300 flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      style={{
+        color: state === 'loading' ? 'var(--color-accent)' : state === 'success' ? 'var(--color-success)' : hover ? 'var(--color-accent)' : 'var(--color-muted)',
+        transform: hover && state === 'idle' ? 'scale(1.05)' : 'scale(1)',
+        background: hover && state === 'idle' ? 'var(--color-surface-2)' : 'transparent',
+        filter: hover && state === 'idle' ? 'drop-shadow(0 0 4px rgba(255, 59, 59, 0.4))' : 'none'
+      }}
+      title="Refresh API Key"
+    >
+      <div className="relative w-[14px] h-[14px] flex items-center justify-center">
+        <Check 
+          size={14} 
+          className="absolute transition-all duration-200" 
+          style={{ transform: state === 'success' ? 'scale(1)' : 'scale(0)', opacity: state === 'success' ? 1 : 0 }} 
+        />
+        <RefreshCw 
+          size={14} 
+          className={`absolute transition-all duration-200 ${state === 'loading' ? 'animate-spin' : ''}`} 
+          style={{ transform: state === 'success' ? 'scale(0)' : 'scale(1)', opacity: state === 'success' ? 0 : 1 }} 
+        />
+      </div>
+    </button>
+  )
+}
+
+// ─── Power Toggle ─────────────────────────────────────────────────────────────
+const POWER_TOGGLE_STYLE = `
+@keyframes powerToggle {
+  0% { transform: rotate(0deg) scale(1); filter: brightness(1); }
+  25% { transform: rotate(-15deg) scale(1.1); filter: brightness(1.2); }
+  50% { transform: rotate(15deg) scale(0.95); filter: brightness(1.4); }
+  75% { transform: rotate(0deg) scale(1.15); filter: brightness(1.2); }
+  100% { transform: rotate(0deg) scale(1); filter: brightness(1); }
+}
+.animate-power-toggle {
+  animation: powerToggle 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+`
+
+function PowerToggleButton({ isActive, onClick, animating }: { isActive: boolean, onClick: () => void, animating: boolean }) {
+  const [hover, setHover] = useState(false)
+  const activeColor = '#22C55E'
+  const disabledColor = '#EF4444'
+  const color = isActive ? activeColor : disabledColor
+  const title = isActive ? 'Disable API Key' : 'Enable API Key'
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="p-2 rounded-full transition-all duration-300 flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      style={{
+        color: hover || animating ? color : 'var(--color-muted)',
+        transform: hover && !animating ? 'scale(1.05)' : 'scale(1)',
+        background: hover ? 'var(--color-surface-2)' : 'transparent',
+        filter: hover || animating ? `drop-shadow(0 0 4px ${color}66)` : 'none'
+      }}
+      title={title}
+      aria-label={title}
+    >
+      <Power 
+        size={14} 
+        className={animating ? 'animate-power-toggle' : ''}
+        style={{ transition: 'color 0.3s ease' }}
+      />
+    </button>
+  )
+}
+
+function ConfirmToggleModal({ isActive, onConfirm, onClose }: { isActive: boolean, onConfirm: () => void, onClose: () => void }) {
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', h)
+    return () => document.removeEventListener('keydown', h)
+  }, [onClose])
+
+  const title = isActive ? 'Disable API Key?' : 'Enable API Key?'
+  const desc = isActive 
+    ? 'This API key will stop handling requests until it is enabled again.'
+    : 'This API key will begin accepting requests immediately.'
+  const primaryText = isActive ? 'Disable Key' : 'Enable Key'
+  const shadowColor = isActive ? 'rgba(225, 29, 72, 0.3)' : 'rgba(34, 197, 94, 0.3)'
+  const primaryGradient = isActive 
+    ? 'linear-gradient(135deg, var(--color-accent), #e11d48)' 
+    : 'linear-gradient(135deg, #22c55e, #16a34a)'
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 transition-opacity" onClick={onClose} style={{ background: 'rgba(0,0,0,0.28)', backdropFilter: 'blur(8px)' }} />
+      <div className="relative z-10 w-full max-w-sm p-6 animate-fade-in-up text-center"
+        style={{ background: 'rgba(18,18,22,0.72)', backdropFilter: 'blur(32px) saturate(180%)', borderRadius: '24px', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.14), 0 30px 80px rgba(0,0,0,0.35)', color: '#ffffff' }}>
+        
+        <h2 className="text-lg font-semibold tracking-tight text-white mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{title}</h2>
+        <p className="text-sm text-[rgba(255,255,255,0.7)] mb-6">{desc}</p>
+        
+        <div className="flex items-center gap-3">
+          <button onClick={onClose} className="flex-1 h-10 rounded-xl text-sm font-medium text-white transition-colors hover:bg-[rgba(255,255,255,0.1)]"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            Cancel
+          </button>
+          <button onClick={onConfirm} className="flex-1 h-10 rounded-xl text-sm font-medium text-white transition-all hover-lift"
+            style={{ background: primaryGradient, boxShadow: `0 4px 12px ${shadowColor}`, fontFamily: "'Space Grotesk', sans-serif" }}>
+            {primaryText}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function ApiKeys() {
   const [keys, setKeys] = useState<ApiKey[]>(MOCK_KEYS)
@@ -335,6 +486,8 @@ export default function ApiKeys() {
   const [toastMsg, setToastMsg] = useState('')
   const [editTarget, setEditTarget] = useState<ApiKey | null>(null)
   const [showCreate, setShowCreate] = useState(false)
+  const [toggleTarget, setToggleTarget] = useState<ApiKey | null>(null)
+  const [animatingToggle, setAnimatingToggle] = useState<string | null>(null)
 
   const showToast = useCallback((m: string) => {
     setToastMsg(m)
@@ -350,14 +503,25 @@ export default function ApiKeys() {
     showToast('API Key deleted')
   }
 
-  const handleRotate = (id: string) => {
-    setKeys(ks => ks.map(k => k.id === id ? { ...k, key: `sk-rot-${Math.random().toString(36).slice(2)}`, lastUsed: 'Just now' } : k))
-    showToast('API Key rotated')
+  const handleRefresh = (id: string) => {
+    setKeys(ks => ks.map(k => k.id === id ? { ...k, status: 'active', lastUsed: 'Just now' } : k))
+    showToast('API key refreshed successfully')
   }
 
-  const handleToggleDisable = (id: string) => {
-    setKeys(ks => ks.map(k => k.id === id ? { ...k, status: k.status === 'active' ? 'disabled' : 'active' } : k))
-    showToast('API Key status updated')
+  const handleConfirmToggle = () => {
+    if (!toggleTarget) return
+    const id = toggleTarget.id
+    const newStatus = toggleTarget.status === 'active' ? 'disabled' : 'active'
+    const msg = newStatus === 'active' ? 'API key enabled' : 'API key disabled'
+    
+    setToggleTarget(null)
+    setKeys(ks => ks.map(k => k.id === id ? { ...k, status: newStatus } : k))
+    setAnimatingToggle(id)
+    
+    setTimeout(() => {
+      showToast(msg)
+      setAnimatingToggle(null)
+    }, 600)
   }
 
   const handleSave = (k: ApiKey) => {
@@ -379,6 +543,7 @@ export default function ApiKeys() {
 
   return (
     <div className="space-y-8 animate-fade-in">
+      <style>{POWER_TOGGLE_STYLE}</style>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -501,12 +666,8 @@ export default function ApiKeys() {
                         <button onClick={() => setEditTarget(k)} className="p-2 rounded-full text-muted hover:text-foreground hover:bg-[var(--color-surface-2)] transition-all" title="Edit">
                           <Edit3 size={14} />
                         </button>
-                        <button onClick={() => handleRotate(k.id)} className="p-2 rounded-full text-muted hover:text-warning hover:bg-[var(--color-surface-2)] transition-all" title="Rotate Key">
-                          <RefreshCw size={14} />
-                        </button>
-                        <button onClick={() => handleToggleDisable(k.id)} className="p-2 rounded-full text-muted hover:text-info hover:bg-[var(--color-surface-2)] transition-all" title={k.status === 'active' ? 'Disable' : 'Enable'}>
-                          <Shield size={14} />
-                        </button>
+                        <RefreshActionButton onRefresh={() => handleRefresh(k.id)} />
+                        <PowerToggleButton isActive={k.status === 'active'} onClick={() => setToggleTarget(k)} animating={animatingToggle === k.id} />
                         <button onClick={() => handleDelete(k.id)} className="p-2 rounded-full text-muted hover:text-white hover:bg-accent transition-all" title="Delete">
                           <Trash2 size={14} />
                         </button>
@@ -552,6 +713,13 @@ export default function ApiKeys() {
           initialData={editTarget || undefined}
           onSave={handleSave}
           onClose={() => { setShowCreate(false); setEditTarget(null) }}
+        />
+      )}
+      {toggleTarget && (
+        <ConfirmToggleModal 
+          isActive={toggleTarget.status === 'active'}
+          onConfirm={handleConfirmToggle}
+          onClose={() => setToggleTarget(null)}
         />
       )}
       {toastMsg && <Toast message={toastMsg} />}
