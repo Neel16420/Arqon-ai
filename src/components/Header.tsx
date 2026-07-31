@@ -81,6 +81,19 @@ export default function Header({ activePage, onMenuClick, onLogout }: HeaderProp
 
       {/* Right: theme toggle + notification bell + avatar */}
       <div className="flex items-center gap-2 shrink-0">
+        {/* Panel Switcher (Admin <-> User) */}
+        <button
+          onClick={() => {
+            window.history.pushState(null, '', '/user/dashboard')
+            window.dispatchEvent(new PopStateEvent('popstate'))
+          }}
+          className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-surface-2 hover:bg-surface border border-border text-foreground transition-all flex items-center gap-1.5 cursor-pointer"
+          title="Switch to User Panel"
+        >
+          <span className="w-2 h-2 rounded-full bg-accent" />
+          <span className="hidden md:inline">User Panel</span>
+        </button>
+
         {/* Theme Segmented Control */}
         <ThemeSegmentedControl />
 

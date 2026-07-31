@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import UserApp from './user/UserApp'
 import Login from './pages/Login'
 import Terms from './pages/Terms'
 import Help from './pages/Help'
@@ -90,7 +91,7 @@ function AppLayout({ children, activePage, setActivePage, onLogout }: {
   )
 }
 
-export default function App() {
+function AdminApp() {
   const { session, login, logout } = useAuth()
   const getPathPage = (): Page => {
     const path = window.location.pathname.substring(1)
@@ -161,4 +162,22 @@ export default function App() {
       </PageTransition>
     </AppLayout>
   )
+}
+
+export default function App() {
+  const [isUserPanel, setIsUserPanel] = useState(() => window.location.pathname.startsWith('/user'))
+
+  useEffect(() => {
+    const onPopState = () => {
+      setIsUserPanel(window.location.pathname.startsWith('/user'))
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
+  if (isUserPanel) {
+    return <UserApp />
+  }
+
+  return <AdminApp />
 }
