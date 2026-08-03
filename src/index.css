@@ -61,6 +61,11 @@
   --color-accent-rgb: 255, 59, 59;
   --color-success-rgb: 34, 197, 94;
 
+  /* Routing diagram line strokes — dark mode: faint white rail */
+  --color-routing-line: rgba(255, 255, 255, 1);
+  --color-routing-line-inactive-opacity: 0.15;
+  --color-routing-line-outbound: rgba(255, 255, 255, 0.10);
+
   /* Sidebar Variables (Dark) */
   --color-sidebar-bg: #0D0D0F;
   --color-sidebar-border-right: var(--color-border);
@@ -68,6 +73,9 @@
   --color-sidebar-text-hover: var(--color-foreground);
   --color-sidebar-text-active: var(--color-foreground);
   --color-sidebar-icon-inactive: var(--color-muted);
+  --color-sidebar-icon-active: var(--color-foreground);
+  --color-nav-active-text: var(--color-sidebar-text-active);
+  --color-nav-active-icon: var(--color-sidebar-icon-active);
   --color-sidebar-item-active-bg: linear-gradient(135deg, rgb(var(--color-accent-rgb) / 0.14) 0%, rgba(255,255,255,0.05) 100%);
   --color-sidebar-item-active-border: 1px solid rgb(var(--color-accent-rgb) / 0.25);
   --color-sidebar-item-active-shadow: inset 3px 0 0 var(--color-accent), 0 4px 16px rgb(var(--color-accent-rgb) / 0.12);
@@ -75,6 +83,11 @@
   --color-sidebar-card-bg: var(--color-surface-2);
   --color-sidebar-card-shadow: none;
   --color-sidebar-card-border: 1px solid var(--color-border);
+
+  /* Settings Navigation Glass Hover Effect (Dark Mode) */
+  --color-settings-nav-hover-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  --color-settings-nav-hover-border: rgba(255, 255, 255, 0.12);
+  --color-settings-nav-hover-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 :root.light {
@@ -93,6 +106,11 @@
   --color-accent-rgb: 255, 59, 59;
   --color-success-rgb: 22, 163, 74;
 
+  /* Routing diagram line strokes — light mode: soft slate for contrast on white */
+  --color-routing-line: rgba(15, 23, 42, 1);
+  --color-routing-line-inactive-opacity: 0.20;
+  --color-routing-line-outbound: rgba(15, 23, 42, 0.18);
+
   /* Sidebar Variables (Light) */
   --color-sidebar-bg: #F6F7F9;
   --color-sidebar-border-right: rgba(0, 0, 0, 0.08);
@@ -100,6 +118,9 @@
   --color-sidebar-text-hover: #111827;
   --color-sidebar-text-active: #111827;
   --color-sidebar-icon-inactive: #6B7280;
+  --color-sidebar-icon-active: #111827;
+  --color-nav-active-text: var(--color-sidebar-text-active);
+  --color-nav-active-icon: var(--color-sidebar-icon-active);
   --color-sidebar-item-active-bg: linear-gradient(135deg, rgba(255,0,0,0.08) 0%, rgba(255,0,0,0.02) 100%);
   --color-sidebar-item-active-border: 1px solid rgba(255,0,0,0.15);
   --color-sidebar-item-active-shadow: inset 3px 0 0 var(--color-accent), 0 4px 12px rgba(255,0,0,0.05);
@@ -107,6 +128,11 @@
   --color-sidebar-card-bg: #FFFFFF;
   --color-sidebar-card-shadow: 0 2px 8px rgba(0,0,0,0.04);
   --color-sidebar-card-border: 1px solid rgba(0,0,0,0.06);
+
+  /* Settings Navigation Glass Hover Effect (Light Mode) */
+  --color-settings-nav-hover-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.65) 100%);
+  --color-settings-nav-hover-border: rgba(0, 0, 0, 0.12);
+  --color-settings-nav-hover-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 html,
@@ -239,7 +265,15 @@ body {
   -webkit-backdrop-filter: blur(16px) saturate(160%);
 }
 .sidebar-nav-item.active .sidebar-icon {
-  color: var(--color-accent);
+  color: var(--color-sidebar-icon-active);
+}
+
+/* Shared Theme-Aware Navigation Active Utilities */
+.nav-item-active, .nav-text-active {
+  color: var(--color-sidebar-text-active) !important;
+}
+.nav-icon-active {
+  color: var(--color-sidebar-icon-active) !important;
 }
 
 
@@ -266,4 +300,72 @@ body {
 .login-footer-link:focus-visible {
   color: #ff4d5d;
   text-decoration: underline;
+}
+@keyframes toast-progress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+/* Lightweight High-Performance Skeleton Shimmer */
+.skel-box {
+  background-color: var(--color-surface-2);
+  position: relative;
+  overflow: hidden;
+}
+
+.skel-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.04) 35%,
+    rgba(255, 255, 255, 0.07) 50%,
+    rgba(255, 255, 255, 0.04) 65%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: skel-shimmer-sweep 1.8s infinite cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:root.light .skel-shimmer::after {
+  background-image: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.03) 35%,
+    rgba(0, 0, 0, 0.05) 50%,
+    rgba(0, 0, 0, 0.03) 65%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+@keyframes skel-shimmer-sweep {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skel-shimmer::after {
+    animation: none !important;
+    display: none !important;
+  }
+}
+
+/* Phase 5: Status Change Subtle Pulse & Glow */
+@keyframes statusPulse {
+  0% { opacity: 1; filter: drop-shadow(0 0 0px transparent); }
+  50% { opacity: 0.88; filter: drop-shadow(0 0 10px rgba(255, 59, 59, 0.28)); }
+  100% { opacity: 1; filter: drop-shadow(0 0 0px transparent); }
+}
+
+.animate-status-pulse {
+  animation: statusPulse 1s cubic-bezier(0.4, 0, 0.2, 1) 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-status-pulse {
+    animation: none !important;
+  }
 }

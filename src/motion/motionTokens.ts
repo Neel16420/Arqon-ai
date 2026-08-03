@@ -22,13 +22,13 @@ export const DURATION = {
 /** CSS cubic-bezier easing strings */
 export const EASE = {
   /** Snappy deceleration for enter */
-  out: 'cubic-bezier(0.16, 1, 0.3, 1)',
+  out: "cubic-bezier(0.16, 1, 0.3, 1)",
   /** Sharp acceleration for exit */
-  in: 'cubic-bezier(0.4, 0, 1, 1)',
+  in: "cubic-bezier(0.4, 0, 1, 1)",
   /** Symmetric — good for pulses */
-  inOut: 'cubic-bezier(0.45, 0, 0.55, 1)',
+  inOut: "cubic-bezier(0.45, 0, 0.55, 1)",
   /** Natural spring feel */
-  spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+  spring: "cubic-bezier(0.34, 1.56, 0.64, 1)",
 } as const
 
 /** Packet travel timing in milliseconds */

@@ -21,9 +21,9 @@
  * This keeps React completely out of the hot animation path.
  */
 
-import { useEffect, useRef, useCallback } from 'react'
-import { PACKET } from './motionTokens'
-import { useReducedMotion } from './useReducedMotion'
+import { useEffect, useRef, useCallback } from "react"
+import { PACKET } from "./motionTokens"
+import { useReducedMotion } from "./useReducedMotion"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -40,9 +40,12 @@ export interface RouteNode {
 
 /** Two-segment path: point A → midpoint → point B */
 interface PathSegment {
-  ax: number; ay: number
-  mx: number; my: number
-  bx: number; by: number
+  ax: number
+  ay: number
+  mx: number
+  my: number
+  bx: number
+  by: number
 }
 
 interface Packet {
@@ -72,7 +75,7 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t
  * Segment 1: A → M (t = 0..0.5)
  * Segment 2: M → B (t = 0.5..1)
  */
-function evalPath(path: PathSegment, t: number): { x: number; y: number } {
+function evalPath(path: PathSegment, t: number): { x: number, y: number } {
   if (t <= 0.5) {
     const s = t / 0.5
     return { x: lerp(path.ax, path.mx, s), y: lerp(path.ay, path.my, s) }
@@ -104,8 +107,8 @@ function packetOpacity(t: number): number {
  */
 export function usePacketAnimation(
   activeProvider: RouteNode | null,
-  enginePos: { x: number; y: number },
-  appPos: { x: number; y: number },
+  enginePos: { x: number, y: number },
+  appPos: { x: number, y: number },
 ) {
   const reduced = useReducedMotion()
 
@@ -124,83 +127,95 @@ export function usePacketAnimation(
     activeRef.current = activeProvider
   }, [activeProvider])
 
-  const spawnWave = useCallback((now: number) => {
-    const provider = activeRef.current
-    if (!provider) return
+  const spawnWave = useCallback(
+    (now: number) => {
+      const provider = activeRef.current
+      if (!provider) return
 
-    // Build request path: App → Engine → Provider
-    const reqPath: PathSegment = {
-      ax: appPos.x, ay: appPos.y,
-      mx: enginePos.x, my: enginePos.y,
-      bx: provider.x, by: provider.y,
-    }
-
-    // Build response path: Provider → Engine → App
-    const resPath: PathSegment = {
-      ax: provider.x, ay: provider.y,
-      mx: enginePos.x, my: enginePos.y,
-      bx: appPos.x, by: appPos.y,
-    }
-
-    packetsRef.current = [
-      {
-        el: reqRef.current,
-        progress: 0,
-        duration: PACKET.requestDuration,
-        startTime: now,
-        path: reqPath,
-        isResponse: false,
-        color: provider.color,
-      },
-      {
-        el: resRef.current,
-        progress: 0,
-        duration: PACKET.responseDuration,
-        startTime: now + PACKET.stagger + PACKET.requestDuration * 0.6,
-        path: resPath,
-        isResponse: true,
-        color: provider.color,
-      },
-    ]
-  }, [appPos, enginePos])
-
-  const tick = useCallback((now: number) => {
-    // Spawn a new wave if enough time has elapsed
-    if (now - lastWaveRef.current >= PACKET.loopInterval) {
-      lastWaveRef.current = now
-      spawnWave(now)
-    }
-
-    for (const pkt of packetsRef.current) {
-      if (!pkt.el || now < pkt.startTime) {
-        // Not started yet — hide it
-        if (pkt.el) {
-          pkt.el.setAttribute('opacity', '0')
-        }
-        continue
+      // Build request path: App → Engine → Provider
+      const reqPath: PathSegment = {
+        ax: appPos.x,
+        ay: appPos.y,
+        mx: enginePos.x,
+        my: enginePos.y,
+        bx: provider.x,
+        by: provider.y,
       }
 
-      const elapsed = now - pkt.startTime
-      const raw = Math.min(elapsed / pkt.duration, 1)
-      const t = easeInOut(raw)
-      const pos = evalPath(pkt.path, t)
-      const opacity = packetOpacity(raw)
+      // Build response path: Provider → Engine → App
+      const resPath: PathSegment = {
+        ax: provider.x,
+        ay: provider.y,
+        mx: enginePos.x,
+        my: enginePos.y,
+        bx: appPos.x,
+        by: appPos.y,
+      }
 
-      // Write directly to DOM — bypasses React reconciler
-      pkt.el.setAttribute('cx', String(pos.x))
-      pkt.el.setAttribute('cy', String(pos.y))
-      pkt.el.setAttribute('opacity', String(opacity))
-      pkt.el.setAttribute('fill', pkt.color)
-    }
+      packetsRef.current = [
+        {
+          el: reqRef.current,
+          progress: 0,
+          duration: PACKET.requestDuration,
+          startTime: now,
+          path: reqPath,
+          isResponse: false,
+          color: provider.color,
+        },
+        {
+          el: resRef.current,
+          progress: 0,
+          duration: PACKET.responseDuration,
+          startTime: now + PACKET.stagger + PACKET.requestDuration * 0.6,
+          path: resPath,
+          isResponse: true,
+          color: provider.color,
+        },
+      ]
+    },
+    [appPos, enginePos],
+  )
 
-    rafRef.current = requestAnimationFrame(tick)
-  }, [spawnWave])
+  const tick = useCallback(
+    (now: number) => {
+      // Spawn a new wave if enough time has elapsed
+      if (now - lastWaveRef.current >= PACKET.loopInterval) {
+        lastWaveRef.current = now
+        spawnWave(now)
+      }
+
+      for (const pkt of packetsRef.current) {
+        if (!pkt.el || now < pkt.startTime) {
+          // Not started yet — hide it
+          if (pkt.el) {
+            pkt.el.setAttribute("opacity", "0")
+          }
+          continue
+        }
+
+        const elapsed = now - pkt.startTime
+        const raw = Math.min(elapsed / pkt.duration, 1)
+        const t = easeInOut(raw)
+        const pos = evalPath(pkt.path, t)
+        const opacity = packetOpacity(raw)
+
+        // Write directly to DOM — bypasses React reconciler
+        pkt.el.setAttribute("cx", String(pos.x))
+        pkt.el.setAttribute("cy", String(pos.y))
+        pkt.el.setAttribute("opacity", String(opacity))
+        pkt.el.setAttribute("fill", pkt.color)
+      }
+
+      rafRef.current = requestAnimationFrame(tick)
+    },
+    [spawnWave],
+  )
 
   useEffect(() => {
-    if (reduced) {
+    if (reduced || !activeProvider) {
       // Hide both packets, keep engine alive but no packets
-      if (reqRef.current) reqRef.current.setAttribute('opacity', '0')
-      if (resRef.current) resRef.current.setAttribute('opacity', '0')
+      if (reqRef.current) reqRef.current.setAttribute("opacity", "0")
+      if (resRef.current) resRef.current.setAttribute("opacity", "0")
       return
     }
 

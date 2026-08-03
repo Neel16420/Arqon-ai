@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { useReducedMotion } from './useReducedMotion'
+import { useEffect } from "react"
+import { useReducedMotion } from "./useReducedMotion"
 
 // Module-level flag to track animations that have already played during this session.
 // This prevents animations from replaying when switching tabs, filtering, or re-rendering.
@@ -7,7 +7,7 @@ const playedFlags = new Set<string>()
 
 export function useProgressBarAnimation(id: string): boolean {
   const reduced = useReducedMotion()
-  
+
   // Read state synchronously during render to avoid layout shifts or hydration mismatches.
   const hasPlayed = playedFlags.has(id)
 

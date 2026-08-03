@@ -1,5 +1,5 @@
 export function cn(...classes: (string | undefined | false | null)[]): string {
-  return classes.filter(Boolean).join(' ')
+  return classes.filter(Boolean).join(" ")
 }
 
 export function formatLatency(ms: number): string {
@@ -14,6 +14,6 @@ export function formatNumber(n: number): string {
 }
 
 export function maskKey(key: string): string {
-  if (key.length <= 8) return '•'.repeat(key.length)
-  return key.slice(0, 8) + '•'.repeat(20) + key.slice(-4)
+  if (key.length <= 8) return "•".repeat(key.length)
+  return key.slice(0, 8) + "•".repeat(20) + key.slice(-4)
 }
