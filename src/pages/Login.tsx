@@ -1,18 +1,10 @@
-import { useState, useEffect, useRef } from "react"
+import { useState } from "react"
 
 import { useToast } from "../components/toast/ToastContext"
 
 import { Eye, EyeOff, AlertCircle } from "lucide-react"
 
 import AuthBackground from '../components/auth/AuthBackground'
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
->>>>>>> f74ae380a15092b3cf2aa6cc9590c6e727a1b0ae
 
 /* ─────────────────────────────────────────────────────────────────────────
    AUTH LOGIC
