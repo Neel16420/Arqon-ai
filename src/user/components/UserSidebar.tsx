@@ -12,6 +12,9 @@ import {
   Settings,
   CreditCard,
   HelpCircle,
+  Key,
+  Activity,
+  BarChart2,
 } from 'lucide-react'
 import { cn } from '../../utils'
 import { useAuth } from '../../hooks/useAuth'
@@ -24,6 +27,9 @@ export type UserPage =
   | 'verify-email'
   | 'dashboard'
   | 'chat'
+  | 'keys'
+  | 'requests'
+  | 'analytics'
   | 'projects'
   | 'prompts'
   | 'models'
@@ -39,19 +45,23 @@ interface NavItem {
   id: UserPage
   label: string
   icon: React.ReactNode
+  badge?: string
 }
 
 const navItems: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-  { id: 'chat', label: 'AI Workspace', icon: <MessageSquare size={18} /> },
+  { id: 'chat', label: 'AI Workspace', icon: <MessageSquare size={18} />, badge: 'Pro' },
+  { id: 'keys', label: 'API Keys', icon: <Key size={18} /> },
+  { id: 'requests', label: 'Requests Log', icon: <Activity size={18} /> },
+  { id: 'analytics', label: 'Usage Analytics', icon: <BarChart2 size={18} /> },
+  { id: 'models', label: 'AI Models', icon: <Cpu size={18} /> },
   { id: 'projects', label: 'Projects', icon: <FolderGit2 size={18} /> },
   { id: 'prompts', label: 'Prompt Library', icon: <Bookmark size={18} /> },
-  { id: 'models', label: 'AI Models', icon: <Cpu size={18} /> },
-  { id: 'files', label: 'Files & Documents', icon: <FileText size={18} /> },
-  { id: 'notifications', label: 'Notifications', icon: <Bell size={18} /> },
-  { id: 'profile', label: 'Profile', icon: <User size={18} /> },
+  { id: 'files', label: 'Files & Assets', icon: <FileText size={18} /> },
+  { id: 'notifications', label: 'Notifications', icon: <Bell size={18} />, badge: '3' },
+  { id: 'profile', label: 'User Profile', icon: <User size={18} /> },
   { id: 'settings', label: 'Settings', icon: <Settings size={18} /> },
-  { id: 'billing', label: 'Billing', icon: <CreditCard size={18} /> },
+  { id: 'billing', label: 'Billing & Plan', icon: <CreditCard size={18} /> },
   { id: 'help', label: 'Help Center', icon: <HelpCircle size={18} /> },
 ]
 
@@ -176,10 +186,15 @@ export default function UserSidebar({ activePage, setActivePage, open, onClose }
                   {item.icon}
                 </span>
                 <span
-                  className="hidden lg:block md:hidden truncate font-medium"
+                  className="hidden lg:flex md:hidden flex-1 items-center justify-between truncate font-medium"
                   style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px' }}
                 >
-                  {item.label}
+                  <span className="truncate">{item.label}</span>
+                  {item.badge && (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-accent/10 text-accent border border-accent/20">
+                      {item.badge}
+                    </span>
+                  )}
                 </span>
               </button>
             )

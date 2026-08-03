@@ -10,6 +10,8 @@ import LoadingState from '../components/dashboard/LoadingState'
 import ErrorState from '../components/dashboard/ErrorState'
 import { SlidersHorizontal, RefreshCw } from 'lucide-react'
 
+import AnimatedRoutingFlow from '../../components/AnimatedRoutingFlow'
+
 type DashboardViewMode = 'normal' | 'loading' | 'empty' | 'error'
 
 export default function Dashboard() {
@@ -147,6 +149,23 @@ export default function Dashboard() {
               </button>
             </div>
             <StatsGrid />
+          </section>
+
+          {/* Live Routing Flow Map */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2
+                className="text-base font-bold text-foreground"
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                Live Provider Routing Map
+              </h2>
+              <span className="text-xs text-muted flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                Live Sync with Connected Keys
+              </span>
+            </div>
+            <AnimatedRoutingFlow />
           </section>
 
           {/* 4 & 5. Recent Activity & Favorite Models Grid */}

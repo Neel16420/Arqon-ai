@@ -396,3 +396,9 @@ export function useEngineFlash(phase: RoutingPhase) {
 
   return ref
 }
+
+import RoutingDiagram from "./RoutingDiagram"
+
+export default function AnimatedRoutingFlow() {
+  return <RoutingDiagram />
+}

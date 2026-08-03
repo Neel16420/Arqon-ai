@@ -13,6 +13,9 @@ import UserSettings from './pages/UserSettings'
 import UserBilling from './pages/UserBilling'
 import HelpCenter from './pages/HelpCenter'
 import UserAuth from './pages/UserAuth'
+import UserApiKeys from './pages/UserApiKeys'
+import RequestsHistory from './pages/RequestsHistory'
+import UserAnalytics from './pages/UserAnalytics'
 import { useAuth } from '../hooks/useAuth'
 
 /** Triggers animate-page-enter on every route change via React key trick. */
@@ -38,6 +41,9 @@ export default function UserApp() {
       'verify-email',
       'dashboard',
       'chat',
+      'keys',
+      'requests',
+      'analytics',
       'projects',
       'prompts',
       'models',
@@ -102,6 +108,9 @@ export default function UserApp() {
       <PageTransition pageKey={activePage}>
         {activePage === 'dashboard' && <Dashboard />}
         {activePage === 'chat' && <ChatLayout />}
+        {activePage === 'keys' && <UserApiKeys />}
+        {activePage === 'requests' && <RequestsHistory />}
+        {activePage === 'analytics' && <UserAnalytics />}
         {activePage === 'projects' && <Projects />}
         {activePage === 'prompts' && <PromptLibrary />}
         {activePage === 'models' && <ModelsCatalog />}
