@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import UserSidebar, { type UserPage } from '../components/UserSidebar'
 import UserHeader from '../components/UserHeader'
+import AvatarPickerModal from '../components/profile/AvatarPickerModal'
 import { LayoutDashboard, MessageSquare, FolderGit2, FileText, Menu } from 'lucide-react'
 
 const EXPANDED_W = 264
@@ -17,12 +18,27 @@ interface UserLayoutProps {
 export default function UserLayout({ children, activePage, setActivePage, onLogout }: UserLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarExpanded, setSidebarExpanded] = useState(() => {
-    try {
-      return localStorage.getItem('arqon-sidebar-pinned') !== 'false'
-    } catch {
-      return true
-    }
+    try { return localStorage.getItem('arqon-sidebar-pinned') !== 'false' } catch { return true }
   })
+
+  // ── Global avatar state — single source of truth ──
+  const [selectedAvatarId, setSelectedAvatarId] = useState('avatar-01')
+  const [selectedAvatarUrl, setSelectedAvatarUrl] = useState('/avatars/avatar-01.png')
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false)
+
+  const handleSaveAvatar = useCallback((id: string, url: string) => {
+    setSelectedAvatarId(id)
+    setSelectedAvatarUrl(url)
+    // Notify profile page via custom event so UserProfile stays in sync
+    window.dispatchEvent(new CustomEvent('arqon-avatar-changed', { detail: { id, url } }))
+  }, [])
+
+  // Listen for any page wanting to open the avatar modal
+  useEffect(() => {
+    const handler = () => setIsAvatarModalOpen(true)
+    window.addEventListener('arqon-open-avatar-modal', handler)
+    return () => window.removeEventListener('arqon-open-avatar-modal', handler)
+  }, [])
 
   const handleExpandedChange = useCallback((expanded: boolean) => {
     setSidebarExpanded(expanded)
@@ -36,17 +52,17 @@ export default function UserLayout({ children, activePage, setActivePage, onLogo
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onExpandedChange={handleExpandedChange}
+        avatarUrl={selectedAvatarUrl}
+        onOpenAvatarModal={() => setIsAvatarModalOpen(true)}
+        onLogout={onLogout}
       />
 
-      {/* Content area — animated margin matches sidebar width */}
+      {/* Content area — animated margin matches sidebar width on desktop */}
       <motion.div
         className="flex flex-col flex-1 min-w-0 overflow-hidden"
         animate={{ marginLeft: sidebarExpanded ? EXPANDED_W : COLLAPSED_W }}
         transition={{ duration: 0.26, ease: [0.4, 0, 0.2, 1] }}
-        // On mobile, no desktop sidebar, so no margin
-        style={{ marginLeft: 0 }}
       >
-        {/* Hide the animated margin on mobile (md: override) */}
         <style>{`
           @media (max-width: 767px) {
             .user-content-motion { margin-left: 0 !important; }
@@ -67,58 +83,38 @@ export default function UserLayout({ children, activePage, setActivePage, onLogo
             </div>
           </main>
 
-          {/* Mobile Bottom Navigation Bar */}
+          {/* Mobile Bottom Navigation */}
           <nav className="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-surface border-t border-border z-40 flex items-center justify-around px-2">
-            <button
-              onClick={() => setActivePage('dashboard')}
-              className={`flex flex-col items-center gap-1 text-[10px] font-medium cursor-pointer ${
-                activePage === 'dashboard' ? 'text-accent font-bold' : 'text-muted'
-              }`}
-            >
-              <LayoutDashboard size={18} />
-              <span>Home</span>
+            <button onClick={() => setActivePage('dashboard')}
+              className={`flex flex-col items-center gap-1 text-[10px] font-medium cursor-pointer ${activePage === 'dashboard' ? 'text-accent font-bold' : 'text-muted'}`}>
+              <LayoutDashboard size={18} /><span>Home</span>
             </button>
-
-            <button
-              onClick={() => setActivePage('chat')}
-              className={`flex flex-col items-center gap-1 text-[10px] font-medium cursor-pointer ${
-                activePage === 'chat' ? 'text-accent font-bold' : 'text-muted'
-              }`}
-            >
-              <MessageSquare size={18} />
-              <span>Chat</span>
+            <button onClick={() => setActivePage('chat')}
+              className={`flex flex-col items-center gap-1 text-[10px] font-medium cursor-pointer ${activePage === 'chat' ? 'text-accent font-bold' : 'text-muted'}`}>
+              <MessageSquare size={18} /><span>Chat</span>
             </button>
-
-            <button
-              onClick={() => setActivePage('projects')}
-              className={`flex flex-col items-center gap-1 text-[10px] font-medium cursor-pointer ${
-                activePage === 'projects' ? 'text-accent font-bold' : 'text-muted'
-              }`}
-            >
-              <FolderGit2 size={18} />
-              <span>Projects</span>
+            <button onClick={() => setActivePage('projects')}
+              className={`flex flex-col items-center gap-1 text-[10px] font-medium cursor-pointer ${activePage === 'projects' ? 'text-accent font-bold' : 'text-muted'}`}>
+              <FolderGit2 size={18} /><span>Projects</span>
             </button>
-
-            <button
-              onClick={() => setActivePage('files')}
-              className={`flex flex-col items-center gap-1 text-[10px] font-medium cursor-pointer ${
-                activePage === 'files' ? 'text-accent font-bold' : 'text-muted'
-              }`}
-            >
-              <FileText size={18} />
-              <span>Files</span>
+            <button onClick={() => setActivePage('files')}
+              className={`flex flex-col items-center gap-1 text-[10px] font-medium cursor-pointer ${activePage === 'files' ? 'text-accent font-bold' : 'text-muted'}`}>
+              <FileText size={18} /><span>Files</span>
             </button>
-
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="flex flex-col items-center gap-1 text-[10px] font-medium text-muted cursor-pointer"
-            >
-              <Menu size={18} />
-              <span>Menu</span>
+            <button onClick={() => setSidebarOpen(true)} className="flex flex-col items-center gap-1 text-[10px] font-medium text-muted cursor-pointer">
+              <Menu size={18} /><span>Menu</span>
             </button>
           </nav>
         </div>
       </motion.div>
+
+      {/* Global Avatar Picker Modal — controlled from UserLayout */}
+      <AvatarPickerModal
+        isOpen={isAvatarModalOpen}
+        onClose={() => setIsAvatarModalOpen(false)}
+        currentAvatarId={selectedAvatarId}
+        onSaveAvatar={handleSaveAvatar}
+      />
     </div>
   )
 }

@@ -26,7 +26,6 @@ import NotificationPrefsSection from '../components/profile/NotificationPrefsSec
 import BillingSection from '../components/profile/BillingSection'
 import HelpCenterSection from '../components/profile/HelpCenterSection'
 import ConnectedAccountsSection from '../components/profile/ConnectedAccountsSection'
-import AvatarPickerModal from '../components/profile/AvatarPickerModal'
 
 export type AccountCenterTab =
   | 'overview'
@@ -104,8 +103,21 @@ export default function UserProfile() {
   const [selectedAvatarId, setSelectedAvatarId] = useState('avatar-01')
   const [selectedAvatarUrl, setSelectedAvatarUrl] = useState('/avatars/avatar-01.png')
 
-  // Avatar Modal State
-  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false)
+  // Sync avatar from layout-level AvatarPickerModal (via custom event)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { id, url } = (e as CustomEvent<{ id: string; url: string }>).detail
+      setSelectedAvatarId(id)
+      setSelectedAvatarUrl(url)
+    }
+    window.addEventListener('arqon-avatar-changed', handler)
+    return () => window.removeEventListener('arqon-avatar-changed', handler)
+  }, [])
+
+  // Open the layout-level avatar modal
+  const openAvatarModal = () => {
+    window.dispatchEvent(new CustomEvent('arqon-open-avatar-modal'))
+  }
 
   const handleUpdateInfo = (info: {
     userName: string
@@ -119,11 +131,6 @@ export default function UserProfile() {
     setJobTitle(info.jobTitle)
     setBio(info.bio)
     setTimezone(info.timezone)
-  }
-
-  const handleSaveAvatarFromModal = (id: string, url: string) => {
-    setSelectedAvatarId(id)
-    setSelectedAvatarUrl(url)
   }
 
   return (
@@ -182,7 +189,7 @@ export default function UserProfile() {
                 jobTitle={jobTitle}
                 selectedAvatarUrl={selectedAvatarUrl}
                 onNavigateTab={(t) => setActiveTab(t as AccountCenterTab)}
-                onOpenAvatarModal={() => setIsAvatarModalOpen(true)}
+                onOpenAvatarModal={openAvatarModal}
               />
             )}
 
@@ -205,11 +212,11 @@ export default function UserProfile() {
                 selectedAvatarId={selectedAvatarId}
                 selectedAvatarUrl={selectedAvatarUrl}
                 onSelectAvatarId={(id, url) => {
-                  setSelectedAvatarId(id)
-                  setSelectedAvatarUrl(url)
+                  // Dispatch global event so sidebar + layout stay in sync
+                  window.dispatchEvent(new CustomEvent('arqon-avatar-changed', { detail: { id, url } }))
                   success('Avatar updated!')
                 }}
-                onOpenAvatarModal={() => setIsAvatarModalOpen(true)}
+                onOpenAvatarModal={openAvatarModal}
               />
             )}
 
@@ -223,13 +230,6 @@ export default function UserProfile() {
         </div>
       </div>
 
-      {/* Global Avatar Picker Modal */}
-      <AvatarPickerModal
-        isOpen={isAvatarModalOpen}
-        onClose={() => setIsAvatarModalOpen(false)}
-        currentAvatarId={selectedAvatarId}
-        onSaveAvatar={handleSaveAvatarFromModal}
-      />
     </div>
   )
 }

@@ -16,14 +16,15 @@ import {
   Key,
   Activity,
   BarChart2,
-  ChevronRight,
   Camera,
   ShieldCheck,
   Link2,
-  Edit3,
   Sun,
   Pin,
   PinOff,
+  ChevronUp,
+  LogOut,
+  Settings,
 } from 'lucide-react'
 import { cn } from '../../utils'
 import { useAuth } from '../../hooks/useAuth'
@@ -55,10 +56,10 @@ export type UserPage =
 // ─────────────────────────────────────────────
 const EXPANDED_W = 264
 const COLLAPSED_W = 68
-const HOVER_COLLAPSE_DELAY = 220 // ms
+const HOVER_COLLAPSE_DELAY = 220
 
 // ─────────────────────────────────────────────
-// Nav data
+// Nav items
 // ─────────────────────────────────────────────
 interface NavItem {
   id: UserPage
@@ -68,37 +69,43 @@ interface NavItem {
 }
 
 const mainNavItems: NavItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-  { id: 'chat', label: 'AI Workspace', icon: <MessageSquare size={18} />, badge: 'Pro' },
-  { id: 'keys', label: 'API Keys', icon: <Key size={18} /> },
-  { id: 'requests', label: 'Requests Log', icon: <Activity size={18} /> },
-  { id: 'analytics', label: 'Usage Analytics', icon: <BarChart2 size={18} /> },
-  { id: 'models', label: 'AI Models', icon: <Cpu size={18} /> },
-  { id: 'projects', label: 'Projects', icon: <FolderGit2 size={18} /> },
-  { id: 'prompts', label: 'Prompt Library', icon: <Bookmark size={18} /> },
-  { id: 'files', label: 'Files & Assets', icon: <FileText size={18} /> },
-  { id: 'notifications', label: 'Notifications', icon: <Bell size={18} />, badge: '3' },
-]
-
-interface ProfileSubItem {
-  tab: string
-  label: string
-  icon: React.ReactNode
-}
-
-const PROFILE_SUB_ITEMS: ProfileSubItem[] = [
-  { tab: 'overview', label: 'Overview', icon: <User size={14} /> },
-  { tab: 'personal', label: 'Personal Info', icon: <Edit3 size={14} /> },
-  { tab: 'avatar', label: 'Avatar', icon: <Camera size={14} /> },
-  { tab: 'security', label: 'Security & 2FA', icon: <ShieldCheck size={14} /> },
-  { tab: 'appearance', label: 'Settings & Themes', icon: <Sun size={14} /> },
-  { tab: 'billing', label: 'Billing & Plan', icon: <CreditCard size={14} /> },
-  { tab: 'help', label: 'Help Center', icon: <HelpCircle size={14} /> },
-  { tab: 'connected', label: 'Connected Accounts', icon: <Link2 size={14} /> },
+  { id: 'dashboard',     label: 'Dashboard',       icon: <LayoutDashboard size={18} /> },
+  { id: 'chat',          label: 'AI Workspace',     icon: <MessageSquare size={18} />,  badge: 'Pro' },
+  { id: 'keys',          label: 'API Keys',         icon: <Key size={18} /> },
+  { id: 'requests',      label: 'Requests Log',     icon: <Activity size={18} /> },
+  { id: 'analytics',     label: 'Usage Analytics',  icon: <BarChart2 size={18} /> },
+  { id: 'models',        label: 'AI Models',        icon: <Cpu size={18} /> },
+  { id: 'projects',      label: 'Projects',         icon: <FolderGit2 size={18} /> },
+  { id: 'prompts',       label: 'Prompt Library',   icon: <Bookmark size={18} /> },
+  { id: 'files',         label: 'Files & Assets',   icon: <FileText size={18} /> },
+  { id: 'notifications', label: 'Notifications',    icon: <Bell size={18} />, badge: '3' },
 ]
 
 // ─────────────────────────────────────────────
-// Tooltip wrapper for collapsed icons
+// Account hub menu items
+// ─────────────────────────────────────────────
+interface AccountMenuItem {
+  label: string
+  icon: React.ReactNode
+  action: 'profile-tab' | 'avatar-modal' | 'logout'
+  tab?: string
+  danger?: boolean
+}
+
+const ACCOUNT_MENU_ITEMS: AccountMenuItem[] = [
+  { label: 'My Profile',              icon: <User size={14} />,        action: 'profile-tab', tab: 'overview' },
+  { label: 'Change Avatar',           icon: <Camera size={14} />,      action: 'avatar-modal' },
+  { label: 'Settings & Appearance',   icon: <Sun size={14} />,         action: 'profile-tab', tab: 'appearance' },
+  { label: 'Security & 2FA',          icon: <ShieldCheck size={14} />, action: 'profile-tab', tab: 'security' },
+  { label: 'Billing & Plan',          icon: <CreditCard size={14} />,  action: 'profile-tab', tab: 'billing' },
+  { label: 'Notification Preferences',icon: <Bell size={14} />,        action: 'profile-tab', tab: 'notification-prefs' },
+  { label: 'Help Center',             icon: <HelpCircle size={14} />,  action: 'profile-tab', tab: 'help' },
+  { label: 'Connected Accounts',      icon: <Link2 size={14} />,       action: 'profile-tab', tab: 'connected' },
+  { label: 'Log Out',                 icon: <LogOut size={14} />,      action: 'logout', danger: true },
+]
+
+// ─────────────────────────────────────────────
+// Tooltip (for collapsed icons)
 // ─────────────────────────────────────────────
 function Tooltip({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -106,7 +113,7 @@ function Tooltip({ label, children }: { label: string; children: React.ReactNode
       {children}
       <div
         className="
-          pointer-events-none absolute left-full ml-2.5 z-50
+          pointer-events-none absolute left-full ml-2.5 z-[60]
           px-2.5 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap
           bg-surface-2 border border-border text-foreground shadow-xl
           opacity-0 scale-95 translate-x-1
@@ -132,51 +139,26 @@ function ArqonLogo({ expanded }: { expanded: boolean }) {
       <div
         className="shrink-0 flex items-center justify-center rounded-lg"
         style={{
-          width: '32px',
-          height: '32px',
-          minWidth: '32px',
+          width: '32px', height: '32px', minWidth: '32px',
           background: 'rgb(var(--color-accent-rgb) / 0.08)',
           border: '1px solid rgb(var(--color-accent-rgb) / 0.18)',
           boxShadow: '0 0 10px rgb(var(--color-accent-rgb) / 0.1)',
         }}
       >
-        <img
-          src="/logo/arqon-new-logo.png"
-          alt="Arqon"
-          style={{ width: '26px', height: '26px', objectFit: 'contain' }}
-        />
+        <img src="/logo/arqon-new-logo.png" alt="Arqon" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
       </div>
       <AnimatePresence initial={false}>
         {expanded && (
           <motion.div
-            initial={{ opacity: 0, x: -6 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -6 }}
-            transition={{ duration: 0.18 }}
-            className="overflow-hidden"
+            initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -6 }}
+            transition={{ duration: 0.18 }} className="overflow-hidden"
           >
-            <span
-              className="text-[15px] font-bold tracking-tight block"
-              style={{
-                color: 'var(--color-sidebar-text-active)',
-                fontFamily: "'Space Grotesk', sans-serif",
-                letterSpacing: '-0.02em',
-                whiteSpace: 'nowrap',
-              }}
-            >
+            <span className="text-[15px] font-bold tracking-tight block"
+              style={{ color: 'var(--color-sidebar-text-active)', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
               ARQON
             </span>
-            <span
-              className="block font-semibold"
-              style={{
-                color: 'var(--color-sidebar-text-inactive)',
-                fontFamily: "'Inter', sans-serif",
-                fontSize: '10px',
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                whiteSpace: 'nowrap',
-              }}
-            >
+            <span className="block font-semibold"
+              style={{ color: 'var(--color-sidebar-text-inactive)', fontFamily: "'Inter', sans-serif", fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
               User Workspace
             </span>
           </motion.div>
@@ -187,16 +169,20 @@ function ArqonLogo({ expanded }: { expanded: boolean }) {
 }
 
 // ─────────────────────────────────────────────
-// Main component
+// Props
 // ─────────────────────────────────────────────
 interface UserSidebarProps {
   activePage: UserPage
   setActivePage: (p: UserPage) => void
-  /** Whether mobile drawer is open */
   open: boolean
   onClose: () => void
-  /** Callback so UserLayout can adjust its margin */
   onExpandedChange?: (expanded: boolean) => void
+  /** Avatar URL so the sidebar always reflects the latest selection */
+  avatarUrl?: string
+  /** Opens the avatar picker modal from outside (lifted up) */
+  onOpenAvatarModal?: () => void
+  /** Logout handler */
+  onLogout?: () => void
 }
 
 export default function UserSidebar({
@@ -205,28 +191,23 @@ export default function UserSidebar({
   open,
   onClose,
   onExpandedChange,
+  avatarUrl = '/avatars/avatar-01.png',
+  onOpenAvatarModal,
+  onLogout,
 }: UserSidebarProps) {
-  const { session } = useAuth()
+  const { session, logout } = useAuth()
 
-  // ── Pin state (persisted) ──
+  // ── Pin state ──
   const [pinned, setPinned] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('arqon-sidebar-pinned') === 'true'
-    } catch {
-      return true
-    }
+    try { return localStorage.getItem('arqon-sidebar-pinned') !== 'false' } catch { return true }
   })
 
   // ── Hover expand ──
   const [hovering, setHovering] = useState(false)
   const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
   const expanded = pinned || hovering
 
-  // Notify layout
-  useEffect(() => {
-    onExpandedChange?.(expanded)
-  }, [expanded, onExpandedChange])
+  useEffect(() => { onExpandedChange?.(expanded) }, [expanded, onExpandedChange])
 
   const handleMouseEnter = useCallback(() => {
     if (collapseTimer.current) clearTimeout(collapseTimer.current)
@@ -237,389 +218,297 @@ export default function UserSidebar({
     collapseTimer.current = setTimeout(() => setHovering(false), HOVER_COLLAPSE_DELAY)
   }, [])
 
-  // Cleanup timer on unmount
-  useEffect(() => () => {
-    if (collapseTimer.current) clearTimeout(collapseTimer.current)
-  }, [])
+  useEffect(() => () => { if (collapseTimer.current) clearTimeout(collapseTimer.current) }, [])
 
-  // ── Profile accordion ──
-  const [profileExpanded, setProfileExpanded] = useState(() => activePage === 'profile')
+  // ── Account hub menu ──
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
 
+  // Close menu when clicking outside
+  const accountHubRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    if (activePage === 'profile') setProfileExpanded(true)
-  }, [activePage])
-
-  // ── Active sub-tab ──
-  const [activeTab, setActiveTab] = useState<string>(() => {
-    if (typeof window === 'undefined') return 'overview'
-    return new URLSearchParams(window.location.search).get('tab') || 'overview'
-  })
-
-  useEffect(() => {
-    const onPopState = () => {
-      setActiveTab(new URLSearchParams(window.location.search).get('tab') || 'overview')
+    if (!accountMenuOpen) return
+    const handler = (e: MouseEvent) => {
+      if (accountHubRef.current && !accountHubRef.current.contains(e.target as Node)) {
+        setAccountMenuOpen(false)
+      }
     }
-    window.addEventListener('popstate', onPopState)
-    return () => window.removeEventListener('popstate', onPopState)
-  }, [])
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [accountMenuOpen])
 
   // ── Navigation helpers ──
-  const handleNav = useCallback(
-    (page: UserPage, e: React.MouseEvent<HTMLButtonElement>) => {
-      e.currentTarget.blur()
-      setActivePage(page)
-      onClose()
-    },
-    [setActivePage, onClose]
-  )
+  const handleNav = useCallback((page: UserPage, e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.blur()
+    setActivePage(page)
+    onClose()
+  }, [setActivePage, onClose])
 
-  const handleSubNav = useCallback(
-    (tab: string, e: React.MouseEvent<HTMLButtonElement>) => {
-      e.currentTarget.blur()
-      setActiveTab(tab)
-      window.history.pushState(null, '', `/user/profile?tab=${tab}`)
+  const handleAccountMenuAction = useCallback((item: AccountMenuItem) => {
+    setAccountMenuOpen(false)
+    if (item.action === 'logout') {
+      onLogout?.()
+      logout()
+      return
+    }
+    if (item.action === 'avatar-modal') {
+      onOpenAvatarModal?.()
+      return
+    }
+    if (item.action === 'profile-tab' && item.tab) {
+      window.history.pushState(null, '', `/user/profile?tab=${item.tab}`)
       setActivePage('profile')
       window.dispatchEvent(new PopStateEvent('popstate'))
       onClose()
-    },
-    [setActivePage, onClose]
-  )
+    }
+  }, [setActivePage, onClose, onOpenAvatarModal, onLogout, logout])
 
-  const handleToggleProfile = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>) => {
-      e.currentTarget.blur()
-      if (!expanded) {
-        // If collapsed, expand sidebar first, then open submenu
-        setPinned(true)
-        localStorage.setItem('arqon-sidebar-pinned', 'true')
-        setTimeout(() => setProfileExpanded(true), 200)
-      } else {
-        setProfileExpanded((prev) => !prev)
-      }
-      if (activePage !== 'profile') setActivePage('profile')
-    },
-    [expanded, activePage, setActivePage]
-  )
-
-  const handleTogglePin = useCallback(() => {
-    const next = !pinned
-    setPinned(next)
-    try {
-      localStorage.setItem('arqon-sidebar-pinned', String(next))
-    } catch {}
-  }, [pinned])
-
-  // ─────────────────────────────────────────
-  // Shared label animation props
-  // ─────────────────────────────────────────
+  // Shared label motion
   const labelMotion = {
     initial: { opacity: 0, x: -8, width: 0 },
     animate: { opacity: 1, x: 0, width: 'auto' },
-    exit: { opacity: 0, x: -8, width: 0 },
+    exit:    { opacity: 0, x: -8, width: 0 },
     transition: { duration: 0.18 },
   }
 
   // ─────────────────────────────────────────
-  // Render desktop sidebar
+  // Sidebar content (shared between desktop and mobile drawer)
   // ─────────────────────────────────────────
-  const sidebarContent = (isMobileDrawer = false) => (
-    <div className="flex flex-col h-full">
-      {/* Header: Logo + Pin button */}
-      <div className="relative">
-        <ArqonLogo expanded={isMobileDrawer || expanded} />
-        {/* Pin/Unpin button — visible when desktop expanded */}
-        <AnimatePresence initial={false}>
-          {(isMobileDrawer || expanded) && (
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              onClick={handleTogglePin}
-              title={pinned ? 'Unpin sidebar' : 'Pin sidebar'}
-              className="absolute top-4 right-3 p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface-2 transition-all cursor-pointer hidden md:flex items-center justify-center"
-            >
-              {pinned ? <PinOff size={13} /> : <Pin size={13} />}
-            </motion.button>
-          )}
-        </AnimatePresence>
-        {/* Mobile close button */}
-        {isMobileDrawer && (
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-3 p-1.5 rounded-lg text-muted hover:text-foreground md:hidden cursor-pointer"
-            style={{ background: 'var(--color-surface-2)' }}
-          >
-            <X size={14} />
-          </button>
-        )}
-      </div>
+  const sidebarContent = (isMobileDrawer = false) => {
+    const isExpanded = isMobileDrawer || expanded
 
-      {/* Nav */}
-      <nav className="flex-1 px-2 py-2 overflow-y-auto overflow-x-hidden space-y-0.5">
-        {mainNavItems.map((item) => {
-          const active = activePage === item.id
-          const btn = (
-            <button
-              key={item.id}
-              onClick={(e) => handleNav(item.id, e)}
-              tabIndex={0}
-              className={cn(
-                'relative w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-sm group cursor-pointer transition-all duration-150',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
-                active
-                  ? 'bg-accent/15 text-accent font-semibold'
-                  : 'text-muted hover:text-foreground hover:bg-surface-2/80'
-              )}
-            >
-              {/* Active left bar */}
-              {active && (
-                <span
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full bg-accent"
-                  aria-hidden="true"
-                />
-              )}
-
-              <span
-                className={cn(
-                  'shrink-0 transition-transform duration-200',
-                  !active && 'group-hover:translate-x-0.5',
-                  active ? 'text-accent' : 'text-muted group-hover:text-foreground'
-                )}
+    return (
+      <div className="flex flex-col h-full">
+        {/* ── Header: Logo + Pin ── */}
+        <div className="relative">
+          <ArqonLogo expanded={isExpanded} />
+          <AnimatePresence initial={false}>
+            {isExpanded && (
+              <motion.button
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                onClick={() => {
+                  const next = !pinned
+                  setPinned(next)
+                  try { localStorage.setItem('arqon-sidebar-pinned', String(next)) } catch {}
+                }}
+                title={pinned ? 'Unpin sidebar' : 'Pin sidebar'}
+                className="absolute top-4 right-3 p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface-2 transition-all cursor-pointer hidden md:flex items-center justify-center"
               >
-                {item.icon}
-              </span>
-
-              <AnimatePresence initial={false}>
-                {(isMobileDrawer || expanded) && (
-                  <motion.span
-                    {...labelMotion}
-                    className="flex flex-1 items-center justify-between overflow-hidden whitespace-nowrap font-medium text-[13px]"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
-                  >
-                    <span className="truncate">{item.label}</span>
-                    {item.badge && (
-                      <span className="ml-2 shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold bg-accent/10 text-accent border border-accent/20">
-                        {item.badge}
-                      </span>
-                    )}
-                  </motion.span>
-                )}
-              </AnimatePresence>
+                {pinned ? <PinOff size={13} /> : <Pin size={13} />}
+              </motion.button>
+            )}
+          </AnimatePresence>
+          {isMobileDrawer && (
+            <button onClick={onClose}
+              className="absolute top-4 right-3 p-1.5 rounded-lg text-muted hover:text-foreground md:hidden cursor-pointer"
+              style={{ background: 'var(--color-surface-2)' }}>
+              <X size={14} />
             </button>
-          )
+          )}
+        </div>
 
-          // In collapsed mode, wrap with tooltip
-          return !isMobileDrawer && !expanded ? (
-            <Tooltip key={item.id} label={item.label}>
-              {btn}
-            </Tooltip>
-          ) : (
-            <div key={item.id}>{btn}</div>
-          )
-        })}
-
-        {/* ── Profile Accordion ── */}
-        <div className="pt-0.5">
-          {/* Profile parent trigger */}
-          {!isMobileDrawer && !expanded ? (
-            <Tooltip label="Profile">
+        {/* ── Main Nav ── */}
+        <nav className="flex-1 px-2 py-2 overflow-y-auto overflow-x-hidden space-y-0.5">
+          {mainNavItems.map((item) => {
+            const active = activePage === item.id
+            const btn = (
               <button
-                onClick={handleToggleProfile}
+                key={item.id}
+                onClick={(e) => handleNav(item.id, e)}
+                tabIndex={0}
                 className={cn(
                   'relative w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-sm group cursor-pointer transition-all duration-150',
-                  activePage === 'profile'
-                    ? 'bg-accent/15 text-accent font-semibold'
-                    : 'text-muted hover:text-foreground hover:bg-surface-2/80'
+                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
+                  active ? 'bg-accent/15 text-accent font-semibold' : 'text-muted hover:text-foreground hover:bg-surface-2/80'
                 )}
               >
-                {activePage === 'profile' && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full bg-accent" />
-                )}
-                <span className={cn('shrink-0', activePage === 'profile' ? 'text-accent' : 'text-muted group-hover:text-foreground')}>
-                  <User size={18} />
+                {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full bg-accent" aria-hidden="true" />}
+                <span className={cn('shrink-0 transition-transform duration-200',
+                  !active && 'group-hover:translate-x-0.5',
+                  active ? 'text-accent' : 'text-muted group-hover:text-foreground')}>
+                  {item.icon}
                 </span>
-              </button>
-            </Tooltip>
-          ) : (
-            <button
-              onClick={handleToggleProfile}
-              aria-expanded={profileExpanded}
-              className={cn(
-                'relative w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-sm group cursor-pointer transition-all duration-150',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
-                activePage === 'profile'
-                  ? 'bg-accent/15 text-accent font-semibold'
-                  : 'text-muted hover:text-foreground hover:bg-surface-2/80'
-              )}
-            >
-              {activePage === 'profile' && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full bg-accent" />
-              )}
-              <span className={cn('shrink-0', activePage === 'profile' ? 'text-accent' : 'text-muted group-hover:text-foreground')}>
-                <User size={18} />
-              </span>
-              <AnimatePresence initial={false}>
-                {(isMobileDrawer || expanded) && (
-                  <motion.span
-                    {...labelMotion}
-                    className="flex flex-1 items-center justify-between overflow-hidden whitespace-nowrap font-medium text-[13px]"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
-                  >
-                    <span>Profile</span>
-                    <ChevronRight
-                      size={14}
-                      className={cn(
-                        'transition-transform duration-250 shrink-0 ml-1',
-                        profileExpanded ? 'rotate-90 text-accent' : 'text-muted'
-                      )}
-                    />
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </button>
-          )}
-
-          {/* Submenu */}
-          <AnimatePresence initial={false}>
-            {(isMobileDrawer || expanded) && profileExpanded && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.22, ease: 'easeInOut' }}
-                className="overflow-hidden"
-              >
-                <div className="ml-5 pl-3 mt-1 border-l border-border/40 space-y-0.5 py-0.5">
-                  {PROFILE_SUB_ITEMS.map((sub) => {
-                    const isActive = activePage === 'profile' && activeTab === sub.tab
-                    return (
-                      <button
-                        key={sub.tab}
-                        onClick={(e) => handleSubNav(sub.tab, e)}
-                        tabIndex={0}
-                        className={cn(
-                          'w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-all cursor-pointer',
-                          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent',
-                          isActive
-                            ? 'bg-accent/10 text-accent font-bold border border-accent/20'
-                            : 'text-muted hover:text-foreground hover:bg-surface-2'
-                        )}
-                      >
-                        <span className={cn('shrink-0', isActive ? 'text-accent' : 'text-muted')}>
-                          {sub.icon}
+                <AnimatePresence initial={false}>
+                  {isExpanded && (
+                    <motion.span {...labelMotion}
+                      className="flex flex-1 items-center justify-between overflow-hidden whitespace-nowrap font-medium text-[13px]"
+                      style={{ fontFamily: "'Inter', sans-serif" }}>
+                      <span className="truncate">{item.label}</span>
+                      {item.badge && (
+                        <span className="ml-2 shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold bg-accent/10 text-accent border border-accent/20">
+                          {item.badge}
                         </span>
-                        <span className="text-[11.5px] font-medium truncate">{sub.label}</span>
-                      </button>
+                      )}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </button>
+            )
+
+            return !isExpanded ? (
+              <Tooltip key={item.id} label={item.label}>{btn}</Tooltip>
+            ) : (
+              <div key={item.id}>{btn}</div>
+            )
+          })}
+        </nav>
+
+        {/* ── Bottom Account Hub ── */}
+        <div
+          ref={accountHubRef}
+          className="px-2 py-2 shrink-0 overflow-visible relative"
+          style={{ borderTop: '1px solid var(--color-sidebar-border-right)' }}
+        >
+          {/* Account Menu — opens upward */}
+          <AnimatePresence initial={false}>
+            {accountMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+                className="absolute bottom-full left-2 right-2 mb-2 z-[70] rounded-2xl overflow-hidden"
+                style={{
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
+                  boxShadow: '0 -8px 32px rgba(0,0,0,0.4), 0 -2px 8px rgba(0,0,0,0.2)',
+                }}
+              >
+                {/* Menu Header — user identity */}
+                <div className="px-3.5 py-3 border-b border-border/60 flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-accent/40 shadow-sm">
+                    <img src={avatarUrl} alt="User" className="w-full h-full object-cover"
+                      onError={(e) => { ;(e.target as HTMLElement).style.display = 'none' }} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold truncate" style={{ color: 'var(--color-sidebar-text-active)', whiteSpace: 'nowrap' }}>
+                      {session.isAuthenticated ? 'Neel Patil' : 'User'}
+                    </p>
+                    <p className="text-[10px] truncate" style={{ color: 'var(--color-sidebar-text-inactive)', fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'nowrap' }}>
+                      Pro Workspace
+                    </p>
+                  </div>
+                </div>
+
+                {/* Menu Items */}
+                <div className="p-1.5 space-y-0.5">
+                  {ACCOUNT_MENU_ITEMS.map((item, idx) => {
+                    const isDivider = idx === ACCOUNT_MENU_ITEMS.length - 1
+                    return (
+                      <div key={item.label}>
+                        {isDivider && <div className="my-1 border-t border-border/50" />}
+                        <button
+                          onClick={() => handleAccountMenuAction(item)}
+                          className={cn(
+                            'w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium cursor-pointer transition-all text-left',
+                            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent',
+                            item.danger
+                              ? 'text-rose-400 hover:bg-rose-500/10 hover:text-rose-300'
+                              : 'text-muted hover:text-foreground hover:bg-surface-2'
+                          )}
+                        >
+                          <span className={cn('shrink-0', item.danger ? 'text-rose-400' : 'text-muted')}>
+                            {item.icon}
+                          </span>
+                          {item.label}
+                        </button>
+                      </div>
                     )
                   })}
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
-      </nav>
 
-      {/* Bottom User Info */}
-      <div
-        className="px-2 py-3 shrink-0 overflow-hidden"
-        style={{ borderTop: '1px solid var(--color-sidebar-border-right)' }}
-      >
-        {!isMobileDrawer && !expanded ? (
-          <Tooltip label={`${session.isAuthenticated ? 'Neel' : 'User'} · Workspace`}>
+          {/* Account Hub Card */}
+          {!isExpanded ? (
+            <Tooltip label={`${session.isAuthenticated ? 'Neel Patil' : 'User'} · Account`}>
+              <button
+                onClick={() => setAccountMenuOpen((v) => !v)}
+                className={cn(
+                  'w-full flex items-center justify-center px-1 py-1.5 rounded-xl cursor-pointer transition-all',
+                  accountMenuOpen ? 'bg-surface-2 ring-1 ring-accent/30' : 'hover:bg-surface-2'
+                )}
+              >
+                <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-accent/40 shadow-sm">
+                  <img src={avatarUrl} alt="User" className="w-full h-full object-cover"
+                    onError={(e) => { ;(e.target as HTMLElement).style.display = 'none' }} />
+                </div>
+              </button>
+            </Tooltip>
+          ) : (
             <button
-              onClick={() => setActivePage('profile')}
-              className="w-full flex items-center justify-center px-1 py-1 rounded-lg cursor-pointer hover:bg-surface-2 transition-colors"
+              onClick={() => setAccountMenuOpen((v) => !v)}
+              className={cn(
+                'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl cursor-pointer transition-all',
+                accountMenuOpen ? 'bg-surface-2 ring-1 ring-accent/30' : 'hover:bg-surface-2'
+              )}
             >
               <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-accent/40 shadow-sm">
-                <img
-                  src="/avatars/avatar-01.png"
-                  alt="User"
-                  className="w-full h-full object-cover"
-                  onError={(e) => { ;(e.target as HTMLElement).style.display = 'none' }}
-                />
+                <img src={avatarUrl} alt="User" className="w-full h-full object-cover"
+                  onError={(e) => { ;(e.target as HTMLElement).style.display = 'none' }} />
               </div>
+              <AnimatePresence initial={false}>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -6 }}
+                    transition={{ duration: 0.18 }} className="flex-1 min-w-0 overflow-hidden"
+                  >
+                    <p className="text-xs font-semibold truncate"
+                      style={{ color: 'var(--color-sidebar-text-active)', whiteSpace: 'nowrap' }}>
+                      {session.isAuthenticated ? 'Neel Patil' : 'User'}
+                    </p>
+                    <p className="text-[10px] truncate"
+                      style={{ color: 'var(--color-sidebar-text-inactive)', fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'nowrap' }}>
+                      Pro Workspace
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <AnimatePresence initial={false}>
+                {isExpanded && (
+                  <motion.span
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="shrink-0 text-muted"
+                  >
+                    <ChevronUp
+                      size={13}
+                      className={cn('transition-transform duration-200', accountMenuOpen ? 'rotate-180 text-accent' : '')}
+                    />
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </button>
-          </Tooltip>
-        ) : (
-          <button
-            onClick={() => setActivePage('profile')}
-            className="w-full flex items-center gap-3 px-1 py-1 rounded-lg cursor-pointer hover:bg-surface-2 transition-colors"
-          >
-            <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-accent/40 shadow-sm">
-              <img
-                src="/avatars/avatar-01.png"
-                alt="User"
-                className="w-full h-full object-cover"
-                onError={(e) => { ;(e.target as HTMLElement).style.display = 'none' }}
-              />
-            </div>
-            <AnimatePresence initial={false}>
-              {(isMobileDrawer || expanded) && (
-                <motion.div
-                  initial={{ opacity: 0, x: -6 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -6 }}
-                  transition={{ duration: 0.18 }}
-                  className="min-w-0 overflow-hidden"
-                >
-                  <p
-                    className="text-xs font-medium truncate"
-                    style={{ color: 'var(--color-sidebar-text-active)', whiteSpace: 'nowrap' }}
-                  >
-                    {session.isAuthenticated ? 'Neel Patil' : 'User'}
-                  </p>
-                  <p
-                    className="text-[10px] truncate"
-                    style={{
-                      color: 'var(--color-sidebar-text-inactive)',
-                      fontFamily: "'JetBrains Mono', monospace",
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    Pro Workspace
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </button>
-        )}
+          )}
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   return (
     <>
-      {/* ─── Mobile overlay ─── */}
+      {/* Mobile overlay */}
       {open && (
-        <div
-          className="fixed inset-0 z-40 md:hidden glass-overlay"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 z-40 md:hidden glass-overlay" onClick={onClose} />
       )}
 
-      {/* ─── Mobile Drawer ─── */}
+      {/* Mobile Drawer */}
       <div
         className={cn(
           'fixed inset-y-0 left-0 z-50 w-64 flex flex-col md:hidden',
           'transition-transform duration-200 ease-in-out',
           open ? 'translate-x-0' : '-translate-x-full'
         )}
-        style={{
-          background: 'var(--color-sidebar-bg)',
-          borderRight: '1px solid var(--color-sidebar-border-right)',
-        }}
+        style={{ background: 'var(--color-sidebar-bg)', borderRight: '1px solid var(--color-sidebar-border-right)' }}
       >
         {sidebarContent(true)}
       </div>
 
-      {/* ─── Desktop Smart Rail ─── */}
+      {/* Desktop Smart Rail */}
       <motion.aside
         className="hidden md:flex flex-col fixed inset-y-0 left-0 z-50 overflow-hidden"
-        style={{
-          background: 'var(--color-sidebar-bg)',
-          borderRight: '1px solid var(--color-sidebar-border-right)',
-        }}
+        style={{ background: 'var(--color-sidebar-bg)', borderRight: '1px solid var(--color-sidebar-border-right)' }}
         animate={{ width: expanded ? EXPANDED_W : COLLAPSED_W }}
         transition={{ duration: 0.26, ease: [0.4, 0, 0.2, 1] }}
         onMouseEnter={handleMouseEnter}
