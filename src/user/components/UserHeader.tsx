@@ -193,10 +193,13 @@ export default function UserHeader({ activePage, setActivePage, onMenuClick, onL
               }}
             >
               <div
-                className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 overflow-hidden"
-                style={{ background: '#000000', boxShadow: '0 0 8px rgb(var(--color-accent-rgb) / 0.25)' }}
+                className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 overflow-hidden border border-accent/40 shadow-sm"
               >
-                <User size={14} className="text-white" />
+                <img
+                  src="/avatars/avatar-01.png"
+                  alt="Neel"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <span className="text-xs font-medium text-foreground hidden sm:block">Neel</span>
               <ChevronDown

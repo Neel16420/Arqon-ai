@@ -210,10 +210,16 @@ export default function UserSidebar({ activePage, setActivePage, open, onClose }
             className="flex items-center gap-3 px-1 py-1 rounded-lg cursor-pointer hover:bg-[var(--color-sidebar-item-hover-bg)] transition-colors"
           >
             <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-accent shrink-0"
-              style={{ background: 'rgb(var(--color-accent-rgb) / 0.1)', border: '1px solid rgb(var(--color-accent-rgb) / 0.2)', fontFamily: "'Space Grotesk', sans-serif" }}
+              className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-accent/40 shadow-sm"
             >
-              <User size={16} />
+              <img
+                src="/avatars/avatar-01.png"
+                alt="User"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  ;(e.target as HTMLElement).style.display = 'none'
+                }}
+              />
             </div>
             <div className="hidden lg:block min-w-0">
               <p className="text-xs font-medium truncate" style={{ color: 'var(--color-sidebar-text-active)' }}>
