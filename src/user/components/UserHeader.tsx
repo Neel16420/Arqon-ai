@@ -20,7 +20,7 @@ const PAGE_META: Record<UserPage, { title: string; desc: string }> = {
   models: { title: 'AI Models', desc: 'Compare latency, context, and performance' },
   files: { title: 'Files & Documents', desc: 'Index document assets for RAG retrieval' },
   notifications: { title: 'Notifications', desc: 'System alerts, API quota & security updates' },
-  profile: { title: 'User Profile', desc: 'Personal identity, avatar, & account security' },
+  profile: { title: 'Account Center', desc: 'Manage your profile, security, appearance, billing, & settings' },
   settings: { title: 'Settings', desc: 'Preferences, security, & model options' },
   billing: { title: 'Billing & Plans', desc: 'Subscription tier, quotas, & invoice history' },
   help: { title: 'Help & Docs', desc: 'Documentation, FAQs, & support tickets' },

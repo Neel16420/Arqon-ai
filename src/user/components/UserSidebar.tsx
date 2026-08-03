@@ -59,10 +59,7 @@ const navItems: NavItem[] = [
   { id: 'prompts', label: 'Prompt Library', icon: <Bookmark size={18} /> },
   { id: 'files', label: 'Files & Assets', icon: <FileText size={18} /> },
   { id: 'notifications', label: 'Notifications', icon: <Bell size={18} />, badge: '3' },
-  { id: 'profile', label: 'User Profile', icon: <User size={18} /> },
-  { id: 'settings', label: 'Settings', icon: <Settings size={18} /> },
-  { id: 'billing', label: 'Billing & Plan', icon: <CreditCard size={18} /> },
-  { id: 'help', label: 'Help Center', icon: <HelpCircle size={18} /> },
+  { id: 'profile', label: 'Account Center', icon: <User size={18} /> },
 ]
 
 function ArqonLogo({ compact }: { compact: boolean }) {
