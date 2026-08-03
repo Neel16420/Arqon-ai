@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react'
 import type React from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   X,
   LayoutDashboard,
@@ -15,6 +17,12 @@ import {
   Key,
   Activity,
   BarChart2,
+  ChevronRight,
+  Camera,
+  ShieldCheck,
+  Link2,
+  Edit3,
+  Sun,
 } from 'lucide-react'
 import { cn } from '../../utils'
 import { useAuth } from '../../hooks/useAuth'
@@ -48,7 +56,7 @@ interface NavItem {
   badge?: string
 }
 
-const navItems: NavItem[] = [
+const mainNavItems: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
   { id: 'chat', label: 'AI Workspace', icon: <MessageSquare size={18} />, badge: 'Pro' },
   { id: 'keys', label: 'API Keys', icon: <Key size={18} /> },
@@ -59,7 +67,23 @@ const navItems: NavItem[] = [
   { id: 'prompts', label: 'Prompt Library', icon: <Bookmark size={18} /> },
   { id: 'files', label: 'Files & Assets', icon: <FileText size={18} /> },
   { id: 'notifications', label: 'Notifications', icon: <Bell size={18} />, badge: '3' },
-  { id: 'profile', label: 'Account Center', icon: <User size={18} /> },
+]
+
+interface ProfileSubItem {
+  tab: string
+  label: string
+  icon: React.ReactNode
+}
+
+const PROFILE_SUB_ITEMS: ProfileSubItem[] = [
+  { tab: 'overview', label: 'Overview', icon: <User size={15} /> },
+  { tab: 'personal', label: 'Personal Information', icon: <Edit3 size={15} /> },
+  { tab: 'avatar', label: 'Avatar Management', icon: <Camera size={15} /> },
+  { tab: 'security', label: 'Security & 2FA', icon: <ShieldCheck size={15} /> },
+  { tab: 'appearance', label: 'Settings & Themes', icon: <Sun size={15} /> },
+  { tab: 'billing', label: 'Billing & Plan', icon: <CreditCard size={15} /> },
+  { tab: 'help', label: 'Help Center', icon: <HelpCircle size={15} /> },
+  { tab: 'connected', label: 'Connected Accounts', icon: <Link2 size={15} /> },
 ]
 
 function ArqonLogo({ compact }: { compact: boolean }) {
@@ -111,9 +135,52 @@ interface UserSidebarProps {
 export default function UserSidebar({ activePage, setActivePage, open, onClose }: UserSidebarProps) {
   const { session } = useAuth()
 
+  // Profile accordion expansion state
+  const [profileExpanded, setProfileExpanded] = useState(() => activePage === 'profile')
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'overview'
+    const params = new URLSearchParams(window.location.search)
+    return params.get('tab') || 'overview'
+  })
+
+  // Auto-expand when active page is profile
+  useEffect(() => {
+    if (activePage === 'profile') {
+      setProfileExpanded(true)
+    }
+  }, [activePage])
+
+  // Sync activeTab on popstate
+  useEffect(() => {
+    const onPopState = () => {
+      const params = new URLSearchParams(window.location.search)
+      setActiveTab(params.get('tab') || 'overview')
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
   const handleNav = (page: UserPage, e: React.MouseEvent<HTMLButtonElement>) => {
     e.currentTarget.blur()
     setActivePage(page)
+    onClose()
+  }
+
+  const handleToggleProfile = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.blur()
+    setProfileExpanded((prev) => !prev)
+    if (activePage !== 'profile') {
+      setActivePage('profile')
+    }
+  }
+
+  const handleSubNav = (tab: string, e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.blur()
+    setActiveTab(tab)
+    const newUrl = `/user/profile?tab=${tab}`
+    window.history.pushState(null, '', newUrl)
+    setActivePage('profile')
+    window.dispatchEvent(new PopStateEvent('popstate'))
     onClose()
   }
 
@@ -164,7 +231,7 @@ export default function UserSidebar({ activePage, setActivePage, open, onClose }
 
         {/* Nav */}
         <nav className="flex-1 px-2 py-3 overflow-y-auto space-y-0.5">
-          {navItems.map((item) => {
+          {mainNavItems.map((item) => {
             const active = activePage === item.id
             return (
               <button
@@ -196,6 +263,114 @@ export default function UserSidebar({ activePage, setActivePage, open, onClose }
               </button>
             )
           })}
+
+          {/* Collapsible Profile / Account Center Parent Item */}
+          <div className="pt-1">
+            <button
+              onClick={handleToggleProfile}
+              tabIndex={0}
+              aria-expanded={profileExpanded}
+              aria-controls="profile-submenu"
+              className={cn(
+                'sidebar-nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm group cursor-pointer',
+                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
+                activePage === 'profile' ? 'active' : ''
+              )}
+            >
+              <span className="sidebar-icon transition-transform duration-200 group-hover:translate-x-1">
+                <User size={18} />
+              </span>
+              <span
+                className="hidden lg:flex md:hidden flex-1 items-center justify-between truncate font-medium"
+                style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px' }}
+              >
+                <span className="truncate">Profile</span>
+                <ChevronRight
+                  size={14}
+                  className={cn(
+                    'transition-transform duration-250 text-muted',
+                    profileExpanded ? 'rotate-90 text-accent' : ''
+                  )}
+                />
+              </span>
+            </button>
+
+            {/* Submenu Accordion (Desktop & Mobile Drawer) */}
+            <AnimatePresence initial={false}>
+              {profileExpanded && (
+                <motion.div
+                  id="profile-submenu"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: 'easeInOut' }}
+                  className="overflow-hidden hidden lg:block md:hidden"
+                >
+                  <div className="mt-1 ml-4 pl-3 border-l border-border/50 space-y-0.5 py-1">
+                    {PROFILE_SUB_ITEMS.map((sub) => {
+                      const isSubActive = activePage === 'profile' && activeTab === sub.tab
+                      return (
+                        <button
+                          key={sub.tab}
+                          onClick={(e) => handleSubNav(sub.tab, e)}
+                          tabIndex={0}
+                          className={cn(
+                            'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs transition-all cursor-pointer font-medium text-left',
+                            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent',
+                            isSubActive
+                              ? 'text-accent bg-accent/10 border border-accent/20 font-bold'
+                              : 'text-muted hover:text-foreground hover:bg-surface-2'
+                          )}
+                        >
+                          <span className={cn('shrink-0', isSubActive ? 'text-accent' : 'text-muted')}>
+                            {sub.icon}
+                          </span>
+                          <span className="truncate text-[12px]">{sub.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Mobile Submenu Accordion */}
+            <AnimatePresence initial={false}>
+              {profileExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: 'easeInOut' }}
+                  className="overflow-hidden block lg:hidden md:hidden"
+                >
+                  <div className="mt-1 ml-4 pl-3 border-l border-border/50 space-y-0.5 py-1">
+                    {PROFILE_SUB_ITEMS.map((sub) => {
+                      const isSubActive = activePage === 'profile' && activeTab === sub.tab
+                      return (
+                        <button
+                          key={sub.tab}
+                          onClick={(e) => handleSubNav(sub.tab, e)}
+                          tabIndex={0}
+                          className={cn(
+                            'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs transition-all cursor-pointer font-medium text-left',
+                            isSubActive
+                              ? 'text-accent bg-accent/10 border border-accent/20 font-bold'
+                              : 'text-muted hover:text-foreground hover:bg-surface-2'
+                          )}
+                        >
+                          <span className={cn('shrink-0', isSubActive ? 'text-accent' : 'text-muted')}>
+                            {sub.icon}
+                          </span>
+                          <span className="truncate text-[12px]">{sub.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </nav>
 
         {/* Account Bottom Area */}

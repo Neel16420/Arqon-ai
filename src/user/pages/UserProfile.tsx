@@ -57,11 +57,43 @@ const NAV_TABS: NavTabItem[] = [
   { id: 'connected', label: 'Connected Accounts', icon: <Link2 size={16} /> },
 ]
 
+const getUrlTab = (): AccountCenterTab => {
+  if (typeof window === 'undefined') return 'overview'
+  const params = new URLSearchParams(window.location.search)
+  const tab = params.get('tab') as AccountCenterTab
+  const validTabs: AccountCenterTab[] = [
+    'overview',
+    'personal',
+    'avatar',
+    'security',
+    'appearance',
+    'notification-prefs',
+    'billing',
+    'help',
+    'connected',
+  ]
+  return validTabs.includes(tab) ? tab : 'overview'
+}
+
 export default function UserProfile() {
   const { session } = useAuth()
   const { success } = useToast()
 
-  const [activeTab, setActiveTab] = useState<AccountCenterTab>('overview')
+  const [activeTab, _setActiveTab] = useState<AccountCenterTab>(getUrlTab)
+
+  useEffect(() => {
+    const onPopState = () => {
+      _setActiveTab(getUrlTab())
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
+  const setActiveTab = (tab: AccountCenterTab) => {
+    _setActiveTab(tab)
+    const newUrl = `/user/profile?tab=${tab}`
+    window.history.pushState(null, '', newUrl)
+  }
 
   // User Profile State
   const [userName, setUserName] = useState(session.userName || 'Neel')
