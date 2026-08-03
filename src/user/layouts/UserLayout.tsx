@@ -1,7 +1,11 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
+import { motion } from 'framer-motion'
 import UserSidebar, { type UserPage } from '../components/UserSidebar'
 import UserHeader from '../components/UserHeader'
 import { LayoutDashboard, MessageSquare, FolderGit2, FileText, Menu } from 'lucide-react'
+
+const EXPANDED_W = 264
+const COLLAPSED_W = 68
 
 interface UserLayoutProps {
   children: React.ReactNode
@@ -12,6 +16,17 @@ interface UserLayoutProps {
 
 export default function UserLayout({ children, activePage, setActivePage, onLogout }: UserLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarExpanded, setSidebarExpanded] = useState(() => {
+    try {
+      return localStorage.getItem('arqon-sidebar-pinned') !== 'false'
+    } catch {
+      return true
+    }
+  })
+
+  const handleExpandedChange = useCallback((expanded: boolean) => {
+    setSidebarExpanded(expanded)
+  }, [])
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: 'var(--color-background)' }}>
@@ -20,32 +35,30 @@ export default function UserLayout({ children, activePage, setActivePage, onLogo
         setActivePage={setActivePage}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        onExpandedChange={handleExpandedChange}
       />
 
-      {/* Content area — offset for sidebar */}
-      <div
+      {/* Content area — animated margin matches sidebar width */}
+      <motion.div
         className="flex flex-col flex-1 min-w-0 overflow-hidden"
-        style={{
-          marginLeft: 0,
-          paddingLeft: 0,
-        }}
+        animate={{ marginLeft: sidebarExpanded ? EXPANDED_W : COLLAPSED_W }}
+        transition={{ duration: 0.26, ease: [0.4, 0, 0.2, 1] }}
+        // On mobile, no desktop sidebar, so no margin
+        style={{ marginLeft: 0 }}
       >
-        {/* On md+ screens, account for sidebar */}
+        {/* Hide the animated margin on mobile (md: override) */}
         <style>{`
-          @media (min-width: 768px) {
-            .user-content-area { margin-left: 56px; }
-          }
-          @media (min-width: 1024px) {
-            .user-content-area { margin-left: 224px; }
+          @media (max-width: 767px) {
+            .user-content-motion { margin-left: 0 !important; }
           }
         `}</style>
 
-        <div className="user-content-area flex flex-col flex-1 min-w-0 overflow-hidden h-full">
-          <UserHeader 
-            activePage={activePage} 
+        <div className="user-content-motion flex flex-col flex-1 min-w-0 overflow-hidden h-full">
+          <UserHeader
+            activePage={activePage}
             setActivePage={setActivePage}
-            onMenuClick={() => setSidebarOpen(true)} 
-            onLogout={onLogout} 
+            onMenuClick={() => setSidebarOpen(true)}
+            onLogout={onLogout}
           />
 
           <main className="flex-1 overflow-y-auto pb-16 md:pb-6">
@@ -54,7 +67,7 @@ export default function UserLayout({ children, activePage, setActivePage, onLogo
             </div>
           </main>
 
-          {/* Milestone 11: Mobile Bottom Navigation Bar */}
+          {/* Mobile Bottom Navigation Bar */}
           <nav className="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-surface border-t border-border z-40 flex items-center justify-around px-2">
             <button
               onClick={() => setActivePage('dashboard')}
@@ -105,7 +118,7 @@ export default function UserLayout({ children, activePage, setActivePage, onLogo
             </button>
           </nav>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }
