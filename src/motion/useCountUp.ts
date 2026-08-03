@@ -22,28 +22,28 @@
  *
  * Curve: easeOutExpo — fast start, smooth deceleration, no bounce.
  */
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from "react"
 
 export function useCountUp(
   endValue: number,
   durationMs: number = 1400,
-  decimals: number = 0
+  decimals: number = 0,
 ): string {
-  const endRef      = useRef(endValue)
+  const endRef = useRef(endValue)
   const durationRef = useRef(durationMs)
   const decimalsRef = useRef(decimals)
 
   const [value, setValue] = useState<number>(0)
 
   useEffect(() => {
-    const target   = endRef.current
+    const target = endRef.current
     const duration = durationRef.current
     let rafId: number
     let startTime: number | null = null
 
     const animate = (now: number) => {
       if (startTime === null) startTime = now
-      const elapsed  = now - startTime
+      const elapsed = now - startTime
       const progress = Math.min(elapsed / duration, 1)
 
       // easeOutExpo: fast acceleration, smooth deceleration, no bounce
@@ -54,7 +54,7 @@ export function useCountUp(
       if (progress < 1) {
         rafId = requestAnimationFrame(animate)
       } else {
-        setValue(target)   // snap to exact value at completion
+        setValue(target) // snap to exact value at completion
       }
     }
 

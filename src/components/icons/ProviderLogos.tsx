@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react"
 
 export function OpenAIIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -19,7 +19,7 @@ export function AnthropicIcon(props: React.SVGProps<SVGSVGElement>) {
 export function GeminiIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-      <path d="M12 2L13.1 7.4L18.5 8.5L13.1 9.6L12 15L10.9 9.6L5.5 8.5L10.9 7.4L12 2ZM18 15L18.5 17.5L21 18L18.5 18.5L18 21L17.5 18.5L15 18L17.5 17.5L18 15ZM6 15L6.5 17.5L9 18L6.5 18.5L6 21L5.5 18.5L3 18L5.5 17.5L6 15Z"/>
+      <path d="M12 2L13.1 7.4L18.5 8.5L13.1 9.6L12 15L10.9 9.6L5.5 8.5L10.9 7.4L12 2ZM18 15L18.5 17.5L21 18L18.5 18.5L18 21L17.5 18.5L15 18L17.5 17.5L18 15ZM6 15L6.5 17.5L9 18L6.5 18.5L6 21L5.5 18.5L3 18L5.5 17.5L6 15Z" />
     </svg>
   )
 }
@@ -72,19 +72,34 @@ export function DeepSeekIcon(props: React.SVGProps<SVGSVGElement>) {
   )
 }
 
-export function ProviderIcon({ type, ...props }: { type: string } & React.SVGProps<SVGSVGElement>) {
+export function ProviderIcon({
+  type,
+  ...props
+}: { type: string } & React.SVGProps<SVGSVGElement>) {
   switch (type.toLowerCase()) {
-    case 'openai':      return <OpenAIIcon {...props} />
-    case 'anthropic':   return <AnthropicIcon {...props} />
-    case 'google':      return <GeminiIcon {...props} />
-    case 'google ai':   return <GeminiIcon {...props} />
-    case 'mistral':     return <MistralIcon {...props} />
-    case 'cohere':      return <CohereIcon {...props} />
-    case 'azure':       return <AzureIcon {...props} />
-    case 'azure openai': return <AzureIcon {...props} />
-    case 'groq':        return <GroqIcon {...props} />
-    case 'openrouter':  return <OpenRouterIcon {...props} />
-    case 'deepseek':    return <DeepSeekIcon {...props} />
-    default:            return <OpenAIIcon {...props} />
+    case "openai":
+      return <OpenAIIcon {...props} />
+    case "anthropic":
+      return <AnthropicIcon {...props} />
+    case "google":
+      return <GeminiIcon {...props} />
+    case "google ai":
+      return <GeminiIcon {...props} />
+    case "mistral":
+      return <MistralIcon {...props} />
+    case "cohere":
+      return <CohereIcon {...props} />
+    case "azure":
+      return <AzureIcon {...props} />
+    case "azure openai":
+      return <AzureIcon {...props} />
+    case "groq":
+      return <GroqIcon {...props} />
+    case "openrouter":
+      return <OpenRouterIcon {...props} />
+    case "deepseek":
+      return <DeepSeekIcon {...props} />
+    default:
+      return <OpenAIIcon {...props} />
   }
 }

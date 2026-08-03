@@ -370,32 +370,95 @@
     );
   }
 
+  /* ─── Universal Button Consistency (Phase 4) ────────────────────────── */
+  button {
+    transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 180ms ease-out,
+                background-color 180ms ease-out,
+                color 180ms ease-out,
+                opacity 180ms ease-out;
+  }
+
+  button:not(:disabled):active {
+    transform: scale(0.98);
+  }
+
+  button:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
   /* Buttons and Cards: Lift + Shadow */
   .hover-lift {
     transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
                 box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-                border-color 0.2s ease;
+                border-color 0.2s ease,
+                background-color 0.2s ease,
+                opacity 0.2s ease;
   }
   
-  .hover-lift:hover {
+  .hover-lift:not(:disabled):hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 16px rgba(255, 59, 59, 0.28), 0 2px 8px rgba(0, 0, 0, 0.45);
   }
 
-  .hover-lift:active {
+  .hover-lift:not(:disabled):active {
     transform: translateY(0) scale(0.98);
+    box-shadow: 0 2px 8px rgba(255, 59, 59, 0.18);
   }
 
-  /* Shimmer Loading (Skeleton) */
-  .animate-shimmer {
-    background: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.03) 25%,
-      rgba(255, 255, 255, 0.08) 50%,
-      rgba(255, 255, 255, 0.03) 75%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite linear;
+  .hover-lift:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  /* ─── Universal Input Consistency (Phase 5) ─────────────────────────── */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):not(.no-global-input-style),
+  textarea:not(.no-global-input-style),
+  select:not(.no-global-input-style) {
+    transition: border-color 200ms ease-out, box-shadow 200ms ease-out, background-color 200ms ease-out, color 200ms ease-out;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):not(.no-global-input-style):hover,
+  textarea:not(.no-global-input-style):hover,
+  select:not(.no-global-input-style):hover {
+    border-color: rgba(255, 59, 59, 0.45);
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):not(.no-global-input-style):focus,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):not(.no-global-input-style):focus-visible,
+  textarea:not(.no-global-input-style):focus,
+  textarea:not(.no-global-input-style):focus-visible,
+  select:not(.no-global-input-style):focus,
+  select:not(.no-global-input-style):focus-visible {
+    border-color: rgba(255, 59, 59, 0.75) !important;
+    box-shadow: 0 0 14px 1px rgba(255, 59, 59, 0.35) !important;
+    outline: none !important;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-muted);
+    transition: opacity 200ms ease-out, color 200ms ease-out;
+  }
+
+  input:focus::placeholder,
+  textarea:focus::placeholder {
+    opacity: 0.5;
+  }
+
+  input:disabled,
+  textarea:disabled,
+  select:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+    border-color: var(--color-border) !important;
   }
 
   /* Staggered list fade-in-up */
@@ -447,6 +510,17 @@
     animation: pageEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
+  /* ─── Enterprise Global Page Transition System ──────────────────────────── */
+  /* Neutralize legacy root-level fade/enter animations inside the routed content container so our global Framer Motion transition acts as the sole source of truth without double animations or visual lag */
+  .page-transition-root > .animate-fade-in,
+  .page-transition-root > .animate-page-enter,
+  .page-transition-root > * > .animate-fade-in,
+  .page-transition-root > * > .animate-page-enter {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
   /* Card with border-glow on hover */
   .card-hover {
     transition: border-color 0.25s ease,
@@ -487,11 +561,6 @@
   .token-pulse-bar {
     animation: tokenPulse 3s ease-in-out infinite;
   }
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
 }
 
 @keyframes glassOpen {
@@ -604,7 +673,6 @@
   .hover-lift:active {
     transform: none !important;
   }
-  .animate-shimmer,
   .animate-fade-in-up,
   .animate-dropdown-open,
   .animate-breathe-green,
@@ -612,19 +680,19 @@
   .animate-bounce-subtle,
   .animate-draw-line,
   .animate-progress-bar,
-  .animate-fade-in,
-  .animate-page-enter,
-  .sparkline-draw,
-  .token-pulse-bar {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-    stroke-dashoffset: 0 !important;
+    .animate-fade-in,
+    .animate-page-enter,
+    .sparkline-draw,
+    .token-pulse-bar {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+      stroke-dashoffset: 0 !important;
+    }
+    .card-hover {
+      transition: none !important;
+    }
+    .card-hover:hover {
+      transform: none !important;
+    }
   }
-  .card-hover {
-    transition: none !important;
-  }
-  .card-hover:hover {
-    transform: none !important;
-  }
-}

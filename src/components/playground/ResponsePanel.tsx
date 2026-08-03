@@ -1,19 +1,34 @@
-import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter'
-import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/tsx'
-import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript'
-import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript'
-import python from 'react-syntax-highlighter/dist/esm/languages/prism/python'
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { Copy, Download, RefreshCw, Square, Check } from 'lucide-react'
+import { useEffect, useRef } from "react"
 
-SyntaxHighlighter.registerLanguage('tsx', tsx)
-SyntaxHighlighter.registerLanguage('typescript', typescript)
-SyntaxHighlighter.registerLanguage('javascript', javascript)
-SyntaxHighlighter.registerLanguage('python', python)
+import { useToast } from "../toast/ToastContext"
+
+import { motion, AnimatePresence } from "framer-motion"
+
+import ReactMarkdown from "react-markdown"
+
+import remarkGfm from "remark-gfm"
+
+import { PrismLight as SyntaxHighlighter } from "react-syntax-highlighter"
+
+import tsx from "react-syntax-highlighter/dist/esm/languages/prism/tsx"
+
+import typescript from "react-syntax-highlighter/dist/esm/languages/prism/typescript"
+
+import javascript from "react-syntax-highlighter/dist/esm/languages/prism/javascript"
+
+import python from "react-syntax-highlighter/dist/esm/languages/prism/python"
+
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism"
+
+import { Copy, Download, RefreshCw, Square } from "lucide-react"
+
+SyntaxHighlighter.registerLanguage("tsx", tsx)
+
+SyntaxHighlighter.registerLanguage("typescript", typescript)
+
+SyntaxHighlighter.registerLanguage("javascript", javascript)
+
+SyntaxHighlighter.registerLanguage("python", python)
 
 const MOCK_RESPONSE = `Here is a production-ready example of how you can implement a highly optimized sorting algorithm in TypeScript.
 
@@ -51,8 +66,9 @@ Let me know if you need help analyzing the space complexity further!
 const MEMOIZED_PLUGINS = [remarkGfm]
 
 const MEMOIZED_COMPONENTS = {
-  code({node, inline, className, children, ...props}: any) {
-    const match = /language-(\w+)/.exec(className || '')
+  code({ node, inline, className, children, ...props }: any) {
+    const match = /language-(\w+)/.exec(className || "")
+
     return !inline && match ? (
       <div className="rounded-lg overflow-hidden border border-border/40 my-4 shadow-lg">
         <div className="bg-surface-2 px-4 py-2 text-xs text-muted font-mono flex justify-between items-center border-b border-border/40">
@@ -63,60 +79,108 @@ const MEMOIZED_COMPONENTS = {
           style={vscDarkPlus as any}
           language={match[1]}
           PreTag="div"
-          customStyle={{ margin: 0, padding: '16px', background: 'transparent' }}
+          customStyle={{
+            margin: 0,
+
+            padding: "16px",
+
+            background: "transparent",
+          }}
         >
-          {String(children).replace(/\n$/, '')}
+          {String(children).replace(/\n$/, "")}
         </SyntaxHighlighter>
       </div>
     ) : (
-      <code {...props} className="bg-surface-2 px-1.5 py-0.5 rounded text-accent font-mono text-[13px]">
+      <code
+        {...props}
+        className="bg-surface-2 px-1.5 py-0.5 rounded text-accent font-mono text-[13px]"
+      >
         {children}
       </code>
     )
   },
-  table({children}: any) {
-    return <div className="overflow-x-auto my-4"><table className="w-full text-left border-collapse border border-border/40 rounded-lg">{children}</table></div>
+
+  table({ children }: any) {
+    return (
+      <div className="overflow-x-auto my-4">
+        <table className="w-full text-left border-collapse border border-border/40 rounded-lg">
+          {children}
+        </table>
+      </div>
+    )
   },
-  th({children}: any) {
-    return <th className="bg-surface-2/50 border border-border/40 px-4 py-2 font-medium">{children}</th>
+
+  th({ children }: any) {
+    return (
+      <th className="bg-surface-2/50 border border-border/40 px-4 py-2 font-medium">
+        {children}
+      </th>
+    )
   },
-  td({children}: any) {
-    return <td className="border border-border/40 px-4 py-2 text-muted">{children}</td>
-  }
+
+  td({ children }: any) {
+    return (
+      <td className="border border-border/40 px-4 py-2 text-muted">
+        {children}
+      </td>
+    )
+  },
 }
 
 interface ResponsePanelProps {
   content: string
+
   setContent: (val: string) => void
+
   isGenerating: boolean
+
   onStop: () => void
 }
 
-export function ResponsePanel({ content, setContent, isGenerating, onStop }: ResponsePanelProps) {
+export function ResponsePanel({
+  content,
+
+  setContent,
+
+  isGenerating,
+
+  onStop,
+}: ResponsePanelProps) {
+  const { success } = useToast()
+
   const scrollRef = useRef<HTMLDivElement>(null)
-  const [copied, setCopied] = useState(false)
 
   // Simulation of streaming response
+
   useEffect(() => {
     if (isGenerating) {
-      setContent('')
+      setContent("")
+
       let currentIndex = 0
+
       const words = MOCK_RESPONSE.split(/( |\n)/) // split by space or newline to preserve formatting
-      
-      const interval = setInterval(() => {
-        if (currentIndex < words.length) {
-          setContent(words.slice(0, currentIndex + 1).join(''))
-          currentIndex++
-          
-          // Auto-scroll to bottom while streaming
-          if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+
+      const interval = setInterval(
+        () => {
+          if (currentIndex < words.length) {
+            setContent(words.slice(0, currentIndex + 1).join(""))
+
+            currentIndex++
+
+            // Auto-scroll to bottom while streaming
+
+            if (scrollRef.current) {
+              scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+            }
+          } else {
+            clearInterval(interval)
+
+            onStop() // Stop generating when done
           }
-        } else {
-          clearInterval(interval)
-          onStop() // Stop generating when done
-        }
-      }, 40) // 40ms chunk delay
+        },
+
+        40,
+      ) // 40ms chunk delay
 
       return () => clearInterval(interval)
     }
@@ -124,80 +188,94 @@ export function ResponsePanel({ content, setContent, isGenerating, onStop }: Res
 
   const handleCopy = () => {
     navigator.clipboard.writeText(content)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+
+    success("Copied to clipboard")
   }
 
   const handleDownload = () => {
-    const blob = new Blob([content], { type: 'text/markdown' })
+    const blob = new Blob([content], { type: "text/markdown" })
+
     const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
+
+    const a = document.createElement("a")
+
     a.href = url
+
     a.download = `arqon_response_${Date.now()}.md`
+
     a.click()
   }
 
   if (!content && !isGenerating) return null
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
       className="flex flex-col relative w-full"
     >
       <div className="flex items-center justify-between mb-3 shrink-0">
-        <h2 className="text-[11px] font-semibold text-muted uppercase tracking-widest">Response Output</h2>
-        
+        <h2 className="text-[11px] font-semibold text-muted uppercase tracking-widest">
+          Response Output
+        </h2>
+
         {content && (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             className="flex items-center gap-1"
           >
-            <ActionButton icon={copied ? <Check size={12} className="text-success" /> : <Copy size={12} />} onClick={handleCopy} />
-            <ActionButton icon={<Download size={12} />} onClick={handleDownload} />
-            <ActionButton icon={<RefreshCw size={12} />} onClick={() => {}} disabled={isGenerating} />
+            <ActionButton icon={<Copy size={12} />} onClick={handleCopy} />
+            <ActionButton
+              icon={<Download size={12} />}
+              onClick={handleDownload}
+            />
+            <ActionButton
+              icon={<RefreshCw size={12} />}
+              onClick={() => {}}
+              disabled={isGenerating}
+            />
           </motion.div>
         )}
       </div>
 
-      <div 
+      <div
         ref={scrollRef}
         className="bg-surface-2/30 border border-border/40 rounded-xl p-4 md:p-6 overflow-y-scroll custom-scrollbar relative"
-        style={{ minHeight: '350px', maxHeight: '500px' }}
+        style={{ minHeight: "350px", maxHeight: "500px" }}
       >
         <div className="prose prose-invert max-w-none text-sm text-foreground/90 leading-relaxed font-sans pb-10">
-            <ReactMarkdown
-              remarkPlugins={MEMOIZED_PLUGINS}
-              components={MEMOIZED_COMPONENTS}
-            >
-              {content}
-            </ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={MEMOIZED_PLUGINS}
+            components={MEMOIZED_COMPONENTS}
+          >
+            {content}
+          </ReactMarkdown>
 
-            {/* Blinking Cursor */}
-            <AnimatePresence>
-              {isGenerating && (
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
-                  className="inline-block w-2 h-4 bg-accent ml-1 align-middle"
-                />
-              )}
-            </AnimatePresence>
-          </div>
+          {/* Blinking Cursor */}
+          <AnimatePresence>
+            {isGenerating && (
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
+                className="inline-block w-2 h-4 bg-accent ml-1 align-middle"
+              />
+            )}
+          </AnimatePresence>
+        </div>
         {/* Floating Stop Button during generation */}
         <AnimatePresence>
           {isGenerating && (
             <motion.div
-              initial={{ opacity: 0, y: 10, x: '-50%' }}
-              animate={{ opacity: 1, y: 0, x: '-50%' }}
-              exit={{ opacity: 0, y: 10, x: '-50%' }}
+              initial={{ opacity: 0, y: 10, x: "-50%" }}
+              animate={{ opacity: 1, y: 0, x: "-50%" }}
+              exit={{ opacity: 0, y: 10, x: "-50%" }}
               className="absolute bottom-6 left-1/2"
             >
-              <button 
+              <button
                 onClick={onStop}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-surface border border-border hover:border-accent/50 text-sm text-foreground hover:text-accent shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition-all group"
               >
@@ -212,9 +290,21 @@ export function ResponsePanel({ content, setContent, isGenerating, onStop }: Res
   )
 }
 
-function ActionButton({ icon, onClick, disabled = false }: { icon: React.ReactNode, onClick: () => void, disabled?: boolean }) {
+function ActionButton({
+  icon,
+
+  onClick,
+
+  disabled = false,
+}: {
+  icon: React.ReactNode
+
+  onClick: () => void
+
+  disabled?: boolean
+}) {
   return (
-    <button 
+    <button
       disabled={disabled}
       onClick={onClick}
       className="p-1.5 rounded hover:bg-surface-2 text-muted hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
