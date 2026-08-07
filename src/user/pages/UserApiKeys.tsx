@@ -5,19 +5,16 @@ import {
   Copy,
   Check,
   Trash2,
-  Edit2,
   ShieldCheck,
   Zap,
-  Activity,
   AlertCircle,
   Eye,
   EyeOff,
   RefreshCw,
   Search,
-  ExternalLink,
 } from 'lucide-react'
 import { useToast } from '../../components/toast/ToastContext'
-import EmptyState from '../../components/EmptyState'
+import EmptyState from '../../components/shared/EmptyState'
 
 export interface UserApiKeyItem {
   id: string
@@ -186,8 +183,9 @@ export default function UserApiKeys() {
       {/* Keys Table or Empty State */}
       {filteredKeys.length === 0 ? (
         <EmptyState
+          icon={<Key size={24} />}
           title="No API Keys Found"
-          description={search ? `No keys matched "${search}"` : "You haven't generated any API keys yet. Create your first key to start making requests."}
+          subtitle={search ? `No keys matched "${search}"` : "You haven't generated any API keys yet. Create your first key to start making requests."}
           actionLabel="Generate API Key"
           onAction={() => setIsAddModalOpen(true)}
         />

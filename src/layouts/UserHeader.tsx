@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
-import { Menu, Bell, ChevronDown, User, Settings2, LogOut, Search } from 'lucide-react'
+import { Menu, Bell, ChevronDown, User, Settings2, Search } from 'lucide-react'
 import type { UserPage } from './UserSidebar'
-import ThemeSegmentedControl from '../../components/ThemeToggle'
-import CommandPalette from './CommandPalette'
+import ThemeSegmentedControl from '../components/shared/ThemeToggle'
+import CommandPalette from '../user/components/CommandPalette'
 
 const PAGE_META: Record<UserPage, { title: string; desc: string }> = {
   login: { title: 'User Sign In', desc: 'Sign in to your user workspace' },
@@ -36,10 +36,10 @@ interface UserHeaderProps {
   activePage: UserPage
   setActivePage?: (p: UserPage) => void
   onMenuClick: () => void
-  onLogout: () => void
+  avatarUrl?: string
 }
 
-export default function UserHeader({ activePage, setActivePage, onMenuClick, onLogout }: UserHeaderProps) {
+export default function UserHeader({ activePage, setActivePage, onMenuClick, avatarUrl = '/avatars/avatar-01.png' }: UserHeaderProps) {
   const meta = PAGE_META[activePage] || { title: 'User Panel', desc: '' }
   const [showNotif, setShowNotif] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -93,18 +93,6 @@ export default function UserHeader({ activePage, setActivePage, onMenuClick, onL
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {/* Panel Switcher (User <-> Admin) */}
-          <button
-            onClick={() => {
-              window.history.pushState(null, '', '/overview')
-              window.dispatchEvent(new PopStateEvent('popstate'))
-            }}
-            className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-surface-2 hover:bg-surface border border-border text-foreground transition-all flex items-center gap-1.5 cursor-pointer"
-            title="Switch to Admin Panel"
-          >
-            <span className="w-2 h-2 rounded-full bg-blue-400" />
-            <span className="hidden md:inline">Admin Panel</span>
-          </button>
 
           {/* Global Search & Command Palette Button */}
           <button
@@ -196,7 +184,7 @@ export default function UserHeader({ activePage, setActivePage, onMenuClick, onL
                 className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 overflow-hidden border border-accent/40 shadow-sm"
               >
                 <img
-                  src="/avatars/avatar-01.png"
+                  src={avatarUrl}
                   alt="Neel"
                   className="w-full h-full object-cover"
                 />
@@ -261,16 +249,6 @@ export default function UserHeader({ activePage, setActivePage, onMenuClick, onL
                 >
                   <Settings2 size={14} className="text-muted" />
                   <span>Settings</span>
-                </button>
-              </div>
-
-              <div className="py-1 border-t border-border">
-                <button
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all text-accent hover:bg-accent/10"
-                  onClick={onLogout}
-                >
-                  <LogOut size={14} />
-                  <span className="font-semibold">Log out</span>
                 </button>
               </div>
             </div>

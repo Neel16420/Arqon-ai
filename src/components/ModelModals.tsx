@@ -4,7 +4,7 @@ import { motion, AnimatePresence, Variants } from "framer-motion"
 import { X, Save, AlertTriangle } from "lucide-react"
 import { AIModel } from "../pages/Models"
 import { ProviderIcon } from "./icons/ProviderLogos"
-import { ActionSuccessButton } from "./SuccessFeedback"
+import { ActionSuccessButton } from "./shared/SuccessFeedback"
 
 interface ModalProps {
   isOpen: boolean

@@ -48,7 +48,7 @@ import {
 
 import { useProviders } from "../store/providers"
 
-import { EmptyState } from "../components/EmptyState"
+import { EmptyState } from "../components/shared/EmptyState"
 
 // ─── Mock Data ─────────────────────────────────────────────────────────────────
 
@@ -479,7 +479,7 @@ function FlowMap() {
         */}
         <image
           ref={logoRef as unknown as React.RefObject<SVGImageElement>}
-          href="/logo/arqon-mark.png"
+          href="/logo/arqon-logo.png"
           x={LOGO_X}
           y={LOGO_Y}
           width={LOGO_SIZE}

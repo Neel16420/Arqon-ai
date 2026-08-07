@@ -2,7 +2,7 @@ import { useState } from "react"
 
 import { History, Terminal } from "lucide-react"
 
-import { EmptyState } from "../components/EmptyState"
+import { EmptyState } from "../components/shared/EmptyState"
 
 import { useProviders } from "../store/providers"
 

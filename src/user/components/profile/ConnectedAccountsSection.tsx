@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Link2, ShieldCheck, Check, Unlink } from 'lucide-react'
+import { Link2 } from 'lucide-react'
 import { useToast } from '../../../components/toast/ToastContext'
 
 export function ConnectedAccountsSection() {

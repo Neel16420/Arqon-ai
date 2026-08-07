@@ -20,8 +20,8 @@ import RolesPermissions from "./pages/RolesPermissions"
 import UsageLimits from "./pages/UsageLimits"
 import AuditLogs from "./pages/AuditLogs"
 import ActivityTimeline from "./pages/ActivityTimeline"
-import Sidebar, { type Page } from "./components/Sidebar"
-import Header from "./components/Header"
+import Sidebar, { type Page } from "./layouts/Sidebar"
+import Header from "./layouts/Header"
 import { useTheme } from "./hooks/useTheme"
 import { useAuth } from "./hooks/useAuth"
 import { PageSkeleton } from "./components/skeletons/PageSkeleton"
@@ -164,7 +164,7 @@ function AppLayout({
 }
 
 function AdminApp() {
-  const { session, login, logout } = useAuth()
+  const { session, logout } = useAuth()
 
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
@@ -263,7 +263,7 @@ function AdminApp() {
   }
 
   if (!session.isAuthenticated) {
-    return <Login onLogin={(session) => login(session)} />
+    return <Login />
   }
 
   const p1Meta = P1_META[activePage]
@@ -312,17 +312,54 @@ function AdminApp() {
 }
 
 export default function App() {
-  const [isUserPanel, setIsUserPanel] = useState(() => window.location.pathname.startsWith('/user'))
+  const { session } = useAuth()
+  const [activePath, setActivePath] = useState(() => window.location.pathname)
 
   useEffect(() => {
     const onPopState = () => {
-      setIsUserPanel(window.location.pathname.startsWith('/user'))
+      setActivePath(window.location.pathname)
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
   }, [])
 
-  if (isUserPanel) {
+  const isAuth = session.isAuthenticated
+  const isPublic = ['/login', '/terms', '/privacy', '/help'].includes(activePath)
+
+  // Guard 1: Redirect unauthenticated users to /login
+  useEffect(() => {
+    if (!isAuth && !isPublic) {
+      window.history.replaceState(null, '', '/login')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    }
+  }, [isAuth, isPublic, activePath])
+
+  // Guard 2: Redirect authenticated users on public /login back to dashboard
+  useEffect(() => {
+    if (isAuth && activePath === '/login') {
+      const destination = session.userRole === 'admin' ? '/overview' : '/user/dashboard'
+      window.history.replaceState(null, '', destination)
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    }
+  }, [isAuth, activePath, session.userRole])
+
+  // Guard 3: Redirect authenticated users with 'user' role away from Admin paths
+  useEffect(() => {
+    if (isAuth && session.userRole === 'user' && !activePath.startsWith('/user') && !isPublic) {
+      window.history.replaceState(null, '', '/user/dashboard')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    }
+  }, [isAuth, session.userRole, activePath, isPublic])
+
+  if (!isAuth) {
+    if (activePath === '/terms') return <Terms />
+    if (activePath === '/privacy') return <Privacy />
+    if (activePath === '/help') return <Help />
+    return <Login />
+  }
+
+  // Authenticated routing
+  if (activePath.startsWith('/user')) {
     return <UserApp />
   }
 

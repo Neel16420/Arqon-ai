@@ -1,16 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { ChevronDown, Zap, Check, Sparkles } from 'lucide-react'
 
-export interface AIModel {
-  id: string
-  name: string
-  provider: 'OpenAI' | 'Anthropic' | 'Google' | 'DeepSeek'
-  providerBadge: string
-  status: 'Operational' | 'Degraded' | 'Beta'
-  speed: string
-  contextLength: string
-  description: string
-}
+import { AIModel } from '../../../types'
 
 export const AVAILABLE_MODELS: AIModel[] = [
   {

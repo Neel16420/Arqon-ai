@@ -1,4 +1,3 @@
-import React from 'react'
 import { motion } from 'framer-motion'
 import { Camera, Sparkles, Upload, Trash2, ShieldCheck } from 'lucide-react'
 import SelectedAvatar from './SelectedAvatar'

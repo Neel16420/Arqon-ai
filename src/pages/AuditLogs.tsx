@@ -25,9 +25,9 @@ import {
 } from "lucide-react"
 import { useToast } from "../components/toast/ToastContext"
 import { useCountUp } from "../motion/useCountUp"
-import { SearchInput } from "../components/SearchInput"
-import { SelectFilter } from "../components/SelectFilter"
-import { EmptyState } from "../components/EmptyState"
+import { SearchInput } from "../components/shared/SearchInput"
+import { SelectFilter } from "../components/shared/SelectFilter"
+import { EmptyState } from "../components/shared/EmptyState"
 import { useTeamStore, useTeamActivity } from "../store/team"
 import { Users } from "lucide-react"
 

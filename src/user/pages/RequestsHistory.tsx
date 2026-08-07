@@ -5,16 +5,13 @@ import {
   Filter,
   Download,
   CheckCircle2,
-  AlertTriangle,
   XCircle,
-  Clock,
   Zap,
-  ExternalLink,
   ChevronRight,
   RefreshCw,
 } from 'lucide-react'
 import { useToast } from '../../components/toast/ToastContext'
-import EmptyState from '../../components/EmptyState'
+import EmptyState from '../../components/shared/EmptyState'
 
 export interface UserRequestLogItem {
   id: string
@@ -219,8 +216,9 @@ export default function RequestsHistory() {
       {/* Logs Table */}
       {filteredRequests.length === 0 ? (
         <EmptyState
+          icon={<Activity size={24} />}
           title="No Requests Logged"
-          description={search ? `No requests found matching "${search}"` : "You haven't initiated any requests through Arqon router yet."}
+          subtitle={search ? `No requests found matching "${search}"` : "You haven't initiated any requests through Arqon router yet."}
           actionLabel="Launch AI Playground"
           onAction={() => {
             window.history.pushState(null, '', '/user/chat')

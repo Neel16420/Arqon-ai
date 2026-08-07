@@ -162,7 +162,7 @@ function ArqonLogo({
         }}
       >
         <img
-          src="/logo/arqon-new-logo.png"
+          src="/logo/arqon-logo.png"
           alt="Arqon"
           style={{
             width: "26px",
@@ -189,7 +189,7 @@ function ArqonLogo({
         }}
       >
         <img
-          src="/logo/arqon-new-logo.png"
+          src="/logo/arqon-logo.png"
           alt="Arqon"
           style={{ width: "26px", height: "26px", objectFit: "contain" }}
         />

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { UserPage } from './components/UserSidebar'
-import UserLayout from './layouts/UserLayout'
+import type { UserPage } from '../layouts/UserSidebar'
+import UserLayout from '../layouts/UserLayout'
 import Dashboard from './pages/Dashboard'
 import ChatLayout from './components/chat/ChatLayout'
 import Projects from './pages/Projects'
@@ -12,11 +12,11 @@ import UserProfile from './pages/UserProfile'
 import UserSettings from './pages/UserSettings'
 import UserBilling from './pages/UserBilling'
 import HelpCenter from './pages/HelpCenter'
-import UserAuth from './pages/UserAuth'
+
 import UserApiKeys from './pages/UserApiKeys'
 import RequestsHistory from './pages/RequestsHistory'
 import UserAnalytics from './pages/UserAnalytics'
-import { useAuth } from '../hooks/useAuth'
+
 
 /** Triggers animate-page-enter on every route change via React key trick. */
 function PageTransition({ pageKey, children }: { pageKey: string; children: React.ReactNode }) {
@@ -28,8 +28,8 @@ function PageTransition({ pageKey, children }: { pageKey: string; children: Reac
 }
 
 export default function UserApp() {
-  const { logout } = useAuth()
-  
+
+
   const getPathPage = (): UserPage => {
     // The path will start with /user/
     const path = window.location.pathname.replace(/^\/user\/?/, '')
@@ -85,26 +85,10 @@ export default function UserApp() {
     }
   }, [])
 
-  // Render standalone Auth pages for /user/login, /user/register, etc.
-  if (
-    activePage === 'login' ||
-    activePage === 'register' ||
-    activePage === 'forgot-password' ||
-    activePage === 'reset-password' ||
-    activePage === 'verify-email'
-  ) {
-    return (
-      <PageTransition pageKey={activePage}>
-        <UserAuth
-          mode={activePage as any}
-          onSuccessNavigate={(p) => setActivePage(p as UserPage)}
-        />
-      </PageTransition>
-    )
-  }
+
 
   return (
-    <UserLayout activePage={activePage} setActivePage={setActivePage} onLogout={logout}>
+    <UserLayout activePage={activePage} setActivePage={setActivePage}>
       <PageTransition pageKey={activePage}>
         {activePage === 'dashboard' && <Dashboard />}
         {activePage === 'chat' && <ChatLayout />}

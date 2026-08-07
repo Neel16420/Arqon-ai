@@ -1,17 +1,15 @@
-import React, { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import {
   User,
   ShieldCheck,
   Camera,
-  KeyRound,
   Sun,
   Bell,
   CreditCard,
   HelpCircle,
   Link2,
   LayoutDashboard,
-  Sparkles,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useToast } from '../../components/toast/ToastContext'

@@ -19,9 +19,9 @@ import { ProviderIcon } from "../components/icons/ProviderLogos"
 
 import { formatLatency } from "../utils"
 
-import { EmptyState } from "../components/EmptyState"
-import { SearchInput } from "../components/SearchInput"
-import { SelectFilter } from "../components/SelectFilter"
+import { EmptyState } from "../components/shared/EmptyState"
+import { SearchInput } from "../components/shared/SearchInput"
+import { SelectFilter } from "../components/shared/SelectFilter"
 
 import { useProviders } from "../store/providers"
 
@@ -437,7 +437,7 @@ function RequestFlowVisualization({ request }: { request: RequestEntry }) {
       <div className="z-10 flex flex-col items-center gap-2">
         <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-surface-2 border border-border shadow-lg">
           <img
-            src="/logo/arqon-mark.png"
+            src="/logo/arqon-logo.png"
             alt="Arqon"
             className="w-6 h-6 object-contain"
           />

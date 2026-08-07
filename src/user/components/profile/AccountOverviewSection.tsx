@@ -1,16 +1,12 @@
-import React from 'react'
 import { motion } from 'framer-motion'
 import {
-  User,
   ShieldCheck,
   CreditCard,
-  HardDrive,
   Key,
   Activity,
   TrendingUp,
   Camera,
   Edit3,
-  ExternalLink,
 } from 'lucide-react'
 import SelectedAvatar from './SelectedAvatar'
 

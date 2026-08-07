@@ -303,7 +303,7 @@ export default function RoutingDiagram() {
           */}
           <image
             ref={logoRef as unknown as React.RefObject<SVGImageElement>}
-            href="/logo/arqon-mark.png"
+            href="/logo/arqon-logo.png"
             x={LOGO_X}
             y={LOGO_Y}
             width={LOGO_SIZE}
@@ -498,7 +498,7 @@ export default function RoutingDiagram() {
           }}
         >
           <img
-            src="/logo/arqon-mark.png"
+            src="/logo/arqon-logo.png"
             alt="Arqon"
             style={{ width: 18, height: 18, objectFit: "contain" }}
           />

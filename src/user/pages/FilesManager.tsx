@@ -12,14 +12,7 @@ import {
   X,
 } from 'lucide-react'
 
-export interface UserFile {
-  id: string
-  name: string
-  size: string
-  type: 'code' | 'document' | 'image' | 'data'
-  folder: string
-  uploadedAt: string
-}
+import { UserFile } from '../../types'
 
 const INITIAL_FILES: UserFile[] = [
   { id: 'f-1', name: 'system_instructions.json', size: '24.5 KB', type: 'code', folder: 'Prompts', uploadedAt: '10 mins ago' },

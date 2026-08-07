@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Bell, Mail, Smartphone, ShieldAlert, Sparkles, Check } from 'lucide-react'
+import { Bell, Mail, Smartphone, ShieldAlert, Sparkles } from 'lucide-react'
 import { useToast } from '../../../components/toast/ToastContext'
 
 export function NotificationPrefsSection() {

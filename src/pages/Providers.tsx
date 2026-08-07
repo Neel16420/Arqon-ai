@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react"
 
 import { useToast } from "../components/toast/ToastContext"
-import { StatusChangeIndicator } from "../components/SuccessFeedback"
+import { StatusChangeIndicator } from "../components/shared/SuccessFeedback"
 
 import { RefreshCw, Wifi, WifiOff, ChevronUp, ChevronDown, Server } from "lucide-react"
-import { EmptyState } from "../components/EmptyState"
+import { EmptyState } from "../components/shared/EmptyState"
 
 import { useCountUp } from "../motion/useCountUp"
 

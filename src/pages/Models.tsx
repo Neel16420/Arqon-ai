@@ -20,8 +20,8 @@ import { ModelCard } from "../components/ModelCard"
 
 import { EditModelModal, DeleteModelModal } from "../components/ModelModals"
 
-import { EmptyState } from "../components/EmptyState"
-import { SearchInput } from "../components/SearchInput"
+import { EmptyState } from "../components/shared/EmptyState"
+import { SearchInput } from "../components/shared/SearchInput"
 
 import { useProviders } from "../store/providers"
 

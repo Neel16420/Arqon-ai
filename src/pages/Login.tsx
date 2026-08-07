@@ -1,698 +1,482 @@
 import { useState } from "react"
+import { Eye, EyeOff, AlertCircle, Sparkles, Loader2, User, Lock, Mail } from "lucide-react"
 
 import { useToast } from "../components/toast/ToastContext"
+import { useAuth } from "../hooks/useAuth"
+import AuthBackground from "../components/auth/AuthBackground"
+import { 
+  login as authServiceLogin, 
+  register as authServiceRegister 
+} from "../services/authService"
 
-import { Eye, EyeOff, AlertCircle } from "lucide-react"
+export default function Login() {
+  const { success: toastSuccess, error: toastError } = useToast()
+  const { login: syncAuthContext } = useAuth()
 
-import AuthBackground from '../components/auth/AuthBackground'
-
-/* ─────────────────────────────────────────────────────────────────────────
-   AUTH LOGIC
-───────────────────────────────────────────────────────────────────────── */
-
-const ADMIN_PASSWORD = "arqon2024"
-
-interface LoginSession {
-  userName: string
-
-  userRole: string
-
-  userEmail: string
-
-  userAvatar: string
-}
-
-interface LoginProps {
-  onLogin: (session: LoginSession) => void
-}
-
-export default function Login({ onLogin }: LoginProps) {
-  const { success, error: toastError } = useToast()
-
-  const [password, setPassword] = useState("")
-
+  const [currentMode, setCurrentMode] = useState<'login' | 'register' | 'forgot-password'>('login')
+  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [name, setName] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const [showPw, setShowPw] = useState(false)
-
-  const [error, setError] = useState("")
-
+  const [showConfirmPw, setShowConfirmPw] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [registrationSuccess, setRegistrationSuccess] = useState(false)
 
-  const [focused, setFocused] = useState(false)
+  // Live password requirements checklist
+  const requirements = [
+    { label: 'At least 8 characters', met: password.length >= 8 },
+    { label: 'One uppercase letter', met: /[A-Z]/.test(password) },
+    { label: 'One lowercase letter', met: /[a-z]/.test(password) },
+    { label: 'One number', met: /[0-9]/.test(password) },
+    { label: 'One special character', met: /[^A-Za-z0-9]/.test(password) },
+  ]
+
+  const getPasswordStrength = (pwd: string) => {
+    if (!pwd) return { score: 0, label: 'Empty', color: 'bg-surface-2' }
+    let score = 0
+    if (pwd.length >= 8) score += 1
+    if (/[A-Z]/.test(pwd)) score += 1
+    if (/[0-9]/.test(pwd)) score += 1
+    if (/[^A-Za-z0-9]/.test(pwd)) score += 1
+
+    if (score <= 1) return { score: 25, label: 'Weak', color: 'bg-red-500' }
+    if (score === 2) return { score: 50, label: 'Fair', color: 'bg-amber-500' }
+    if (score === 3) return { score: 75, label: 'Good', color: 'bg-blue-500' }
+    return { score: 100, label: 'Strong', color: 'bg-emerald-500' }
+  }
+
+  const strength = getPasswordStrength(password)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
+    setSuccessMsg(null)
 
-    setError("")
+    if (currentMode === 'login') {
+      if (!email || !password) {
+        setError('Please fill in all required fields.')
+        return
+      }
 
-    setLoading(true)
+      setLoading(true)
 
-    await new Promise((r) => setTimeout(r, 600))
+      try {
+        const response = await authServiceLogin({ email, password, rememberMe })
+        
+        syncAuthContext({
+          userName: response.user.name,
+          userRole: response.user.role,
+          userEmail: response.user.email,
+          userAvatar: response.user.role === 'admin' ? '/avatars/avatar-1.png' : '/avatars/avatar-01.png',
+        })
 
-    setLoading(false)
+        setSuccessMsg('Authentication successful! Redirecting...')
+        toastSuccess('Welcome to Arqon', `Successfully signed in as ${response.user.name}`)
 
-    if (password === ADMIN_PASSWORD) {
-      success("Welcome back", "Successfully authenticated as Administrator")
+        setTimeout(() => {
+          const destination = response.user.role === 'admin' ? '/overview' : '/user/dashboard'
+          window.history.pushState(null, '', destination)
+          window.dispatchEvent(new PopStateEvent('popstate'))
+        }, 800)
+      } catch (err: any) {
+        setError(err.message || 'An unexpected error occurred.')
+        toastError('Authentication Failed', err.message || 'Check your credentials and try again.')
+      } finally {
+        setLoading(false)
+      }
 
-      onLogin({
-        userName: "Administrator",
-        userRole: "Super Admin",
-        userEmail: "admin@arqon.internal",
-        userAvatar: "/avatars/avatar-1.png",
-      })
-    } else {
-      toastError("Authentication Failed", "Invalid admin password")
+    } else if (currentMode === 'register') {
+      if (!name || !username || !email || !password || !confirmPassword) {
+        setError('Please fill in all required fields.')
+        return
+      }
 
-      setError("Invalid admin password. Please try again.")
+      // Email format regex
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setError('Please enter a valid email address.')
+        return
+      }
 
-      setPassword("")
+      if (password.length < 8) {
+        setError('Password must be at least 8 characters.')
+        return
+      }
+
+      const unmetRequirements = requirements.filter(req => !req.met)
+      if (unmetRequirements.length > 0) {
+        setError('Password does not meet all complexity requirements.')
+        return
+      }
+
+      if (password !== confirmPassword) {
+        setError('Passwords do not match.')
+        return
+      }
+
+      if (!termsAccepted) {
+        setError('You must accept the Terms & Conditions.')
+        return
+      }
+
+      setLoading(true)
+
+      try {
+        await authServiceRegister({ name, username, email, password })
+
+        setRegistrationSuccess(true)
+        setSuccessMsg('Account created successfully. Please sign in.')
+        toastSuccess('Account Created', 'Welcome to Arqon! Account registered successfully.')
+
+        setTimeout(() => {
+          setRegistrationSuccess(false)
+          setCurrentMode('login')
+          setError(null)
+          setSuccessMsg('Account created successfully. Please sign in to continue.')
+          setPassword('')
+          setConfirmPassword('')
+        }, 2200)
+      } catch (err: any) {
+        setError(err.message || 'Registration failed.')
+        toastError('Registration Failed', err.message || 'Check your information and try again.')
+      } finally {
+        setLoading(false)
+      }
+
+    } else if (currentMode === 'forgot-password') {
+      if (!email) {
+        setError('Please enter your email address.')
+        return
+      }
+
+      setLoading(true)
+
+      try {
+        await new Promise((r) => setTimeout(r, 800))
+        setSuccessMsg('Password recovery link sent! Check your inbox.')
+        toastSuccess('Recovery Sent', 'Please check your email for the recovery link.')
+      } catch (err: any) {
+        setError(err.message || 'Failed to send recovery link.')
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
-  /* Shared input style helpers */
-
-  const inputBase: React.CSSProperties = {
-    width: "100%",
-
-    height: "44px",
-
-    paddingLeft: "14px",
-
-    paddingRight: "42px",
-
-    fontSize: "13px",
-
-    fontFamily: "'JetBrains Mono', monospace",
-
-    color: "#ffffff",
-
-    backdropFilter: "blur(12px)",
-
-    WebkitBackdropFilter: "blur(12px)",
-
-    borderRadius: "10px",
-
-    boxSizing: "border-box",
-
-    transition: "all 200ms ease",
-
-    outline: "none",
+  const navigateMode = (newMode: 'login' | 'register' | 'forgot-password') => {
+    setCurrentMode(newMode)
+    setError(null)
+    setSuccessMsg(null)
+    setPassword('')
+    setConfirmPassword('')
   }
 
-  const inputIdle: React.CSSProperties = {
-    ...inputBase,
-
-    background: "rgba(20, 20, 24, 0.4)",
-
-    border: error
-      ? "1px solid rgba(255,45,85,0.6)"
-      : "1px solid rgba(255,255,255,0.06)",
-
-    boxShadow:
-      "inset 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.02)",
-  }
-
-  const inputFocused: React.CSSProperties = {
-    ...inputBase,
-
-    background: "rgba(30, 30, 35, 0.6)",
-
-    border: "1px solid rgba(255,45,85,0.4)",
-
-    boxShadow:
-      "0 0 0 2px rgba(255,45,85,0.15), inset 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
-  }
-
-  return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-x-hidden overflow-y-auto bg-[#050505] py-8">
-      <AuthBackground />
-
-      {/* ══════════════════════════════════════════════════════════════
-          LOGIN CARD
-          Reduced size, elegant proportions, premium dark acrylic.
-      ══════════════════════════════════════════════════════════════ */}
-      <div className="relative z-10 w-full mx-4" style={{ maxWidth: "400px" }}>
-        <div
-          style={{
-            /* Rich dark glass with subtle red ambient tint at the bottom */
-
-            background: `
-              linear-gradient(160deg, rgba(22,22,26,0.5) 0%, rgba(12,12,15,0.6) 40%, rgba(8,8,10,0.8) 100%),
-              radial-gradient(ellipse at bottom, rgba(255,30,60,0.06) 0%, transparent 70%)
-            `,
-
-            backdropFilter: "blur(48px) saturate(140%)",
-
-            WebkitBackdropFilter: "blur(48px) saturate(140%)",
-
-            border: "1px solid rgba(255,255,255,0.08)",
-
-            borderRadius: "32px",
-
-            position: "relative",
-
-            /* Premium soft shadows and inner edge highlights */
-
-            boxShadow: `
-              0  4px  24px rgba(0,0,0,0.4),
-              0 24px  64px rgba(0,0,0,0.6),
-              0 32px 100px rgba(255,10,40,0.12),
-              inset 0  1px 1px rgba(255,255,255,0.12),
-              inset 0 -1px 1px rgba(0,0,0,0.5)
-            `,
-
-            overflow: "hidden", // Contain corner reflections cleanly
-          }}
-        >
-          {/* ── Top-edge glossy reflection ── */}
-          <div
-            aria-hidden="true"
-            style={{
-              position: "absolute",
-
-              top: 0,
-
-              left: "10%",
-
-              width: "80%",
-
-              height: "1px",
-
-              background:
-                "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 20%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.2) 80%, transparent 100%)",
-
-              pointerEvents: "none",
-
-              zIndex: 2,
-            }}
-          />
-
-          {/* ── Upper-left glossy corner sheen ── */}
-          <div
-            aria-hidden="true"
-            style={{
-              position: "absolute",
-
-              top: 0,
-
-              left: 0,
-
-              width: "140px",
-
-              height: "120px",
-
-              background:
-                "radial-gradient(ellipse at top left, rgba(255,255,255,0.06) 0%, transparent 70%)",
-
-              pointerEvents: "none",
-            }}
-          />
-
-          {/* ═════════════════════════════════════════════════════
-              CARD CONTENT
-          ═════════════════════════════════════════════════════ */}
-          <div style={{ padding: "40px 32px 32px" }}>
-            {/* ── Logo Section ── */}
-            <div
-              style={{
-                display: "flex",
-
-                flexDirection: "column",
-
-                alignItems: "center",
-
-                gap: "16px",
-
-                marginBottom: "24px",
-              }}
-            >
-              {/* Logo Container - Rounded Rectangle with soft glow */}
-              <div style={{ position: "relative" }}>
-                {/* Subtle red bloom behind logo container */}
-                <div
-                  aria-hidden="true"
-                  style={{
-                    position: "absolute",
-
-                    inset: "-8px",
-
-                    borderRadius: "24px",
-
-                    background:
-                      "radial-gradient(circle, rgba(255,35,75,0.3) 0%, transparent 70%)",
-
-                    filter: "blur(12px)",
-
-                    pointerEvents: "none",
-                  }}
-                />
-
-                <div
-                  style={{
-                    width: "52px",
-
-                    height: "52px",
-
-                    borderRadius: "16px",
-
-                    background:
-                      "linear-gradient(145deg, rgba(30,25,28,0.8) 0%, rgba(15,10,12,0.9) 100%)",
-
-                    border: "1px solid rgba(255,45,85,0.25)",
-
-                    display: "flex",
-
-                    alignItems: "center",
-
-                    justifyContent: "center",
-
-                    position: "relative",
-
-                    boxShadow:
-                      "inset 0 1px 2px rgba(255,255,255,0.1), 0 8px 16px rgba(0,0,0,0.5)",
-                  }}
-                >
-                  <img
-                    src="/logo/arqon-new-logo.png"
-                    alt="Arqon"
-                    style={{
-                      width: "28px",
-
-                      height: "28px",
-
-                      objectFit: "contain",
-
-                      position: "relative",
-
-                      zIndex: 1,
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Brand Text */}
-              <div style={{ textAlign: "center" }}>
-                <h1
-                  style={{
-                    fontFamily: "'Space Grotesk', sans-serif",
-
-                    fontSize: "22px",
-
-                    fontWeight: 700,
-
-                    color: "#ffffff",
-
-                    letterSpacing: "-0.02em",
-
-                    lineHeight: 1.2,
-
-                    margin: 0,
-                  }}
-                >
-                  Arqon
-                </h1>
-                <p
-                  style={{
-                    fontSize: "10.5px",
-
-                    color: "rgba(255,255,255,0.4)",
-
-                    marginTop: "4px",
-
-                    letterSpacing: "0.08em",
-
-                    fontFamily: "'Inter', sans-serif",
-
-                    textTransform: "uppercase",
-                  }}
-                >
-                  AI Orchestration Platform
-                </p>
-
-                {/* ── Workspace Role Switcher Pills ── */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '12px' }}>
-                  <span
-                    style={{
-                      padding: '4px 12px',
-                      borderRadius: '20px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      fontFamily: "'Space Grotesk', sans-serif",
-                      color: '#ffffff',
-                      background: 'rgba(255, 45, 85, 0.25)',
-                      border: '1px solid rgba(255, 45, 85, 0.4)',
-                    }}
-                  >
-                    Admin Gateway
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      window.history.pushState(null, '', '/user/login')
-                      window.dispatchEvent(new PopStateEvent('popstate'))
-                    }}
-                    style={{
-                      padding: '4px 12px',
-                      borderRadius: '20px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      fontFamily: "'Space Grotesk', sans-serif",
-                      color: '#ffffff',
-                      background: 'rgba(255,255,255,0.08)',
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    User Workspace →
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* ── Subtle Divider ── */}
-            <div
-              style={{
-                height: "1px",
-
-                background:
-                  "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)",
-
-                marginBottom: "24px",
-              }}
-            />
-
-            {/* ── Form Heading ── */}
-            <div style={{ marginBottom: "20px" }}>
-              <h2
-                style={{
-                  fontFamily: "'Space Grotesk', sans-serif",
-
-                  fontSize: "14px",
-
-                  fontWeight: 600,
-
-                  color: "#ffffff",
-
-                  marginBottom: "4px",
-                }}
-              >
-                Admin access
-              </h2>
-              <p
-                style={{
-                  fontSize: "12px",
-
-                  color: "rgba(255,255,255,0.45)",
-
-                  fontFamily: "'Inter', sans-serif",
-                }}
-              >
-                Enter your admin password to continue.
-              </p>
-            </div>
-
-            {/* ── Form ── */}
-            <form
-              onSubmit={handleSubmit}
-              style={{ display: "flex", flexDirection: "column", gap: "14px" }}
-            >
-              {/* Password field */}
-              <div>
-                <label
-                  htmlFor="password"
-                  style={{
-                    display: "block",
-
-                    fontSize: "10px",
-
-                    fontWeight: 600,
-
-                    color: "rgba(255,255,255,0.4)",
-
-                    marginBottom: "8px",
-
-                    fontFamily: "'Inter', sans-serif",
-
-                    letterSpacing: "0.06em",
-
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Password
-                </label>
-                <div style={{ position: "relative" }}>
-                  <input
-                    id="password"
-                    type={showPw ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    autoComplete="current-password"
-                    style={focused ? inputFocused : inputIdle}
-                    onFocus={() => setFocused(true)}
-                    onBlur={() => setFocused(false)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPw((v) => !v)}
-                    style={{
-                      position: "absolute",
-
-                      right: "12px",
-
-                      top: "50%",
-
-                      transform: "translateY(-50%)",
-
-                      color: "rgba(255,255,255,0.3)",
-
-                      background: "none",
-
-                      border: "none",
-
-                      padding: "4px",
-
-                      cursor: "pointer",
-
-                      display: "flex",
-
-                      alignItems: "center",
-
-                      transition: "color 150ms ease",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = "rgba(255,255,255,0.8)")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color = "rgba(255,255,255,0.3)")
-                    }
-                    tabIndex={-1}
-                  >
-                    {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Error state */}
-              {error && (
-                <div
-                  style={{
-                    display: "flex",
-
-                    alignItems: "center",
-
-                    gap: "8px",
-
-                    fontSize: "12px",
-
-                    padding: "10px 14px",
-
-                    borderRadius: "10px",
-
-                    background: "rgba(255,30,50,0.1)",
-
-                    border: "1px solid rgba(255,30,50,0.2)",
-
-                    color: "#ff6b81",
-
-                    fontFamily: "'Inter', sans-serif",
-                  }}
-                >
-                  <AlertCircle size={14} style={{ flexShrink: 0 }} />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              {/* ── Submit button ── */}
-              <button
-                type="submit"
-                disabled={!password || loading}
-                style={{
-                  width: "100%",
-
-                  height: "44px",
-
-                  borderRadius: "10px",
-
-                  fontSize: "13px",
-
-                  fontWeight: 600,
-
-                  fontFamily: "'Space Grotesk', sans-serif",
-
-                  letterSpacing: "0.02em",
-
-                  color: "#ffffff",
-
-                  cursor: !password || loading ? "not-allowed" : "pointer",
-
-                  opacity: !password || loading ? 0.5 : 1,
-
-                  /* Premium soft crimson vertical gradient */
-
-                  background:
-                    "linear-gradient(180deg, rgba(180,25,45,0.95) 0%, rgba(130,15,30,0.95) 100%)",
-
-                  border: "1px solid rgba(255,40,70,0.4)",
-
-                  position: "relative",
-
-                  overflow: "hidden",
-
-                  boxShadow: `
-                    0 4px 12px rgba(0,0,0,0.3),
-                    0 8px 24px rgba(200,20,40,0.15),
-                    inset 0 1px 1px rgba(255,255,255,0.2),
-                    inset 0 -1px 2px rgba(0,0,0,0.4)
-                  `,
-
-                  transition: "all 150ms ease",
-
-                  marginTop: "10px",
-                }}
-                onMouseEnter={(e) => {
-                  if (!loading && password) {
-                    e.currentTarget.style.transform = "translateY(-1px)"
-
-                    e.currentTarget.style.background =
-                      "linear-gradient(180deg, rgba(200,30,55,1) 0%, rgba(140,20,35,1) 100%)"
-
-                    e.currentTarget.style.boxShadow = `
-                      0 6px 16px rgba(0,0,0,0.4),
-                      0 12px 32px rgba(200,20,40,0.25),
-                      inset 0 1px 1px rgba(255,255,255,0.25),
-                      inset 0 -1px 2px rgba(0,0,0,0.4)
-                    `
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)"
-
-                  e.currentTarget.style.background =
-                    "linear-gradient(180deg, rgba(180,25,45,0.95) 0%, rgba(130,15,30,0.95) 100%)"
-
-                  e.currentTarget.style.boxShadow = `
-                    0 4px 12px rgba(0,0,0,0.3),
-                    0 8px 24px rgba(200,20,40,0.15),
-                    inset 0 1px 1px rgba(255,255,255,0.2),
-                    inset 0 -1px 2px rgba(0,0,0,0.4)
-                  `
-                }}
-                onMouseDown={(e) => {
-                  if (!loading && password) {
-                    e.currentTarget.style.transform =
-                      "translateY(1px) scale(0.99)"
-
-                    e.currentTarget.style.boxShadow = `
-                      0 2px 8px rgba(0,0,0,0.3),
-                      0 4px 16px rgba(200,20,40,0.1),
-                      inset 0 2px 4px rgba(0,0,0,0.3)
-                    `
-                  }
-                }}
-                onMouseUp={(e) => {
-                  if (!loading && password) {
-                    e.currentTarget.style.transform = "translateY(0)"
-                  }
-                }}
-              >
-                {loading ? (
-                  <span
-                    style={{
-                      display: "flex",
-
-                      alignItems: "center",
-
-                      justifyContent: "center",
-
-                      gap: "8px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: "14px",
-
-                        height: "14px",
-
-                        border: "2px solid rgba(255,255,255,0.2)",
-
-                        borderTopColor: "#ffffff",
-
-                        borderRadius: "50%",
-
-                        display: "inline-block",
-
-                        animation: "loginSpin 0.7s linear infinite",
-                      }}
-                    />
-                    Authenticating…
-                  </span>
-                ) : (
-                  "Access Dashboard"
-                )}
-              </button>
-            </form>
+  // Render checkmark success screen inside the glass container
+  if (registrationSuccess) {
+    return (
+      <div className="relative min-h-screen w-screen flex items-center justify-center overflow-x-hidden p-4 select-none">
+        <AuthBackground />
+        <div className="w-full max-w-md rounded-2xl glass-surface glass-border p-8 shadow-2xl flex flex-col items-center justify-center text-center space-y-6 animate-fade-in relative backdrop-blur-xl border border-white/10">
+          
+          {/* Animated bounce check circle */}
+          <div className="w-16 h-16 rounded-full bg-emerald-500/10 border-2 border-emerald-500 flex items-center justify-center animate-bounce">
+            <svg className="w-8 h-8 text-emerald-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
           </div>
 
-          {/* ── Card footer ── */}
-          <div
-            className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 sm:gap-x-4"
-            style={{
-              padding: "16px 24px 24px",
+          <h3 className="text-xl font-bold text-white tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            Account Created!
+          </h3>
+          
+          <p className="text-xs text-muted leading-relaxed max-w-xs">
+            Account created successfully.<br />
+            Please sign in to continue.
+          </p>
 
-              borderTop: "1px solid rgba(255,255,255,0.04)",
-
-              background: "rgba(0,0,0,0.15)",
-            }}
-          >
-            <button
-              onClick={() => (window.location.href = "/terms")}
-              className="login-footer-link"
-            >
-              Terms & Conditions
-            </button>
-            <span className="hidden sm:inline text-white/20 text-[10px]">
-              •
-            </span>
-            <button
-              onClick={() => (window.location.href = "/privacy")}
-              className="login-footer-link"
-            >
-              Privacy Policy
-            </button>
-            <span className="hidden sm:inline text-white/20 text-[10px]">
-              •
-            </span>
-            <button
-              onClick={() => (window.location.href = "/help")}
-              className="login-footer-link"
-            >
-              Help Center
-            </button>
+          <div className="flex items-center gap-2 text-[10px] text-accent font-bold tracking-widest uppercase font-mono">
+            <Loader2 size={12} className="animate-spin text-accent" />
+            <span>Redirecting to Login</span>
           </div>
         </div>
       </div>
+    )
+  }
 
-      <style>{`@keyframes loginSpin { to { transform: rotate(360deg); } }`}</style>
+  return (
+    <div className="relative min-h-screen w-screen flex items-center justify-center overflow-x-hidden p-4 select-none animate-fade-in">
+      {/* Cinematic Animated Space Background */}
+      <AuthBackground />
+
+      <div className="w-full max-w-md rounded-2xl glass-surface glass-border p-6 sm:p-8 shadow-2xl space-y-6 animate-fade-in-up relative backdrop-blur-xl border border-white/10">
+        
+        {/* ARQON Logo & Branding */}
+        <div className="flex flex-col items-center justify-center text-center space-y-1.5 pt-2">
+          <img src="/logo/arqon-logo.png" alt="ARQON Logo" className="w-12 h-12 object-contain" />
+          <h2
+            className="text-xl sm:text-2xl font-bold text-white tracking-tight"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          >
+            {currentMode === 'login' && 'Login'}
+            {currentMode === 'register' && 'Register'}
+            {currentMode === 'forgot-password' && 'Reset Password'}
+          </h2>
+          <p className="text-xs text-muted">
+            {currentMode === 'login' && 'Sign in to continue'}
+            {currentMode === 'register' && 'Get started with your workspace'}
+            {currentMode === 'forgot-password' && 'Recover your workspace access'}
+          </p>
+        </div>
+
+        {/* Spacing Divider */}
+        <div className="border-t border-border/40" />
+
+        {/* Alerts */}
+        {error && (
+          <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-start gap-2.5 leading-relaxed animate-shake">
+            <AlertCircle size={15} className="shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {successMsg && (
+          <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-start gap-2.5 leading-relaxed">
+            <Sparkles size={15} className="shrink-0 mt-0.5 text-emerald-400" />
+            <span>{successMsg}</span>
+          </div>
+        )}
+
+        {/* Input Forms */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {currentMode === 'register' && (
+            <>
+              {/* Full Name */}
+              <div className="relative border-b border-white/20 focus-within:border-accent transition-all duration-200 pb-1">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 text-muted">
+                  <User size={15} />
+                </span>
+                <input
+                  id="register-name"
+                  type="text"
+                  placeholder="Enter your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={loading}
+                  className="w-full h-10 border-0 bg-transparent text-xs text-white placeholder-muted/60 focus:ring-0 focus:outline-none pl-8"
+                />
+              </div>
+
+              {/* Username */}
+              <div className="relative border-b border-white/20 focus-within:border-accent transition-all duration-200 pb-1">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 text-muted">
+                  <User size={15} />
+                </span>
+                <input
+                  id="register-username"
+                  type="text"
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  disabled={loading}
+                  className="w-full h-10 border-0 bg-transparent text-xs text-white placeholder-muted/60 focus:ring-0 focus:outline-none pl-8"
+                />
+              </div>
+            </>
+          )}
+
+          {/* Email or Username */}
+          <div className="relative border-b border-white/20 focus-within:border-accent transition-all duration-200 pb-1">
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 text-muted">
+              {currentMode === 'register' ? <Mail size={15} /> : <User size={15} />}
+            </span>
+            <input
+              id="login-email"
+              type="text"
+              placeholder={currentMode === 'register' ? 'Enter your email' : 'Enter your email/username'}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              className="w-full h-10 border-0 bg-transparent text-xs text-white placeholder-muted/60 focus:ring-0 focus:outline-none pl-8"
+            />
+          </div>
+
+          {/* Password */}
+          {currentMode !== 'forgot-password' && (
+            <div className="relative border-b border-white/20 focus-within:border-accent transition-all duration-200 pb-1">
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 text-muted">
+                <Lock size={15} />
+              </span>
+              <input
+                id="login-password"
+                type={showPw ? 'text' : 'password'}
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                className="w-full h-10 border-0 bg-transparent text-xs text-white placeholder-muted/60 focus:ring-0 focus:outline-none pl-8 pr-8"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw(!showPw)}
+                className="absolute right-0 top-1/2 -translate-y-1/2 text-muted hover:text-foreground cursor-pointer transition-colors"
+              >
+                {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+            </div>
+          )}
+
+          {/* Confirm Password */}
+          {currentMode === 'register' && (
+            <div className="relative border-b border-white/20 focus-within:border-accent transition-all duration-200 pb-1">
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 text-muted">
+                <Lock size={15} />
+              </span>
+              <input
+                id="login-confirmpassword"
+                type={showConfirmPw ? 'text' : 'password'}
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={loading}
+                className="w-full h-10 border-0 bg-transparent text-xs text-white placeholder-muted/60 focus:ring-0 focus:outline-none pl-8 pr-8"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPw(!showConfirmPw)}
+                className="absolute right-0 top-1/2 -translate-y-1/2 text-muted hover:text-foreground cursor-pointer transition-colors"
+              >
+                {showConfirmPw ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+            </div>
+          )}
+
+          {/* Live password requirements checklist for registration */}
+          {currentMode === 'register' && password && (
+            <div className="p-3 rounded-xl bg-surface-2/40 border border-border/40 space-y-2 animate-fade-in">
+              <div className="text-[10px] font-bold text-muted uppercase tracking-wider flex justify-between">
+                <span>Password Requirements</span>
+                <span className="font-bold text-foreground text-[9px]">{strength.label} ({strength.score}%)</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5 text-[11px]">
+                {requirements.map((req, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <span className={`shrink-0 w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold text-[9px] ${
+                      req.met ? 'bg-emerald-500/20 text-emerald-400' : 'bg-muted/10 text-muted/60'
+                    }`}>
+                      {req.met ? '✓' : '○'}
+                    </span>
+                    <span className={req.met ? 'text-foreground font-semibold' : 'text-muted'}>{req.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Remember Me and Forgot Password row */}
+          {currentMode === 'login' ? (
+            <div className="flex items-center justify-between text-xs mt-2 select-none">
+              <label className="flex items-center gap-2 text-muted hover:text-foreground cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  disabled={loading}
+                  className="rounded bg-surface-2 border-border text-accent focus:ring-accent/30 focus:ring-offset-0 focus:ring-1 cursor-pointer"
+                />
+                <span>Remember me</span>
+              </label>
+
+              <button
+                type="button"
+                onClick={() => navigateMode('forgot-password')}
+                className="text-muted hover:text-foreground cursor-pointer transition-all"
+              >
+                Forgot password?
+              </button>
+            </div>
+          ) : currentMode === 'register' ? (
+            <label className="flex items-start gap-2.5 text-xs text-muted hover:text-foreground cursor-pointer transition-colors select-none">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                disabled={loading}
+                className="mt-0.5 rounded bg-surface-2 border-border text-accent focus:ring-accent/30 focus:ring-offset-0 focus:ring-1 cursor-pointer"
+              />
+              <span>
+                I agree to the <a href="/terms" className="text-accent font-bold hover:underline">Terms & Conditions</a> and <a href="/privacy" className="text-accent font-bold hover:underline">Privacy Policy</a>.
+              </span>
+            </label>
+          ) : null}
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full h-11 rounded-xl font-bold text-xs text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer active:scale-[0.97] hover:opacity-90 transition-all duration-200 mt-2"
+            style={{
+              background: 'linear-gradient(135deg, var(--color-accent) 0%, #C62828 100%)',
+            }}
+          >
+            {loading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                <span>Processing...</span>
+              </>
+            ) : (
+              <span>
+                {currentMode === 'login' && 'Login Now'}
+                {currentMode === 'register' && 'Register Now'}
+                {currentMode === 'forgot-password' && 'Recover Password'}
+              </span>
+            )}
+          </button>
+        </form>
+
+        {/* Spacing Divider */}
+        <div className="border-t border-border/40" />
+
+        {/* Footer switch state action items */}
+        <div className="text-center pt-1.5 flex flex-col items-center justify-center gap-1.5 text-xs text-muted select-none">
+          {currentMode === 'login' ? (
+            <div className="flex items-center gap-1">
+              <span>Don't have an account?</span>
+              <button
+                type="button"
+                onClick={() => navigateMode('register')}
+                className="font-bold text-accent hover:underline cursor-pointer transition-all hover:scale-105"
+              >
+                Create Account
+              </button>
+            </div>
+          ) : currentMode === 'register' ? (
+            <div className="flex items-center gap-1">
+              <span>Already have an account?</span>
+              <button
+                type="button"
+                onClick={() => navigateMode('login')}
+                className="font-bold text-accent hover:underline cursor-pointer transition-all hover:scale-105"
+              >
+                Sign In
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigateMode('login')}
+              className="font-bold text-accent hover:underline cursor-pointer transition-all hover:scale-105 flex items-center gap-1.5"
+            >
+              <span>Back to Login</span>
+            </button>
+          )}
+        </div>
+
+      </div>
     </div>
   )
 }

@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Sun, Moon, Monitor, Palette, Sparkles, SlidersHorizontal, Check } from 'lucide-react'
+import { Sun, Moon, Monitor, Palette, Check } from 'lucide-react'
 import { useTheme } from '../../../hooks/useTheme'
-import ThemeSegmentedControl from '../../../components/ThemeToggle'
+import ThemeSegmentedControl from '../../../components/shared/ThemeToggle'
 import { useToast } from '../../../components/toast/ToastContext'
 
 export function AppearanceSection() {
@@ -12,7 +12,6 @@ export function AppearanceSection() {
   const [accentColor, setAccentColor] = useState('#FF2E43')
   const [compactMode, setCompactMode] = useState(false)
   const [animationsEnabled, setAnimationsEnabled] = useState(true)
-  const [fontSize, setFontSize] = useState('Medium (14px)')
 
   return (
     <motion.div
@@ -48,7 +47,7 @@ export function AppearanceSection() {
             <button
               key={t.id}
               onClick={() => {
-                setTheme(t.id as any)
+                setTheme(t.id as any, null)
                 success(`Theme changed to ${t.label}`)
               }}
               className={`p-3 rounded-xl border flex flex-col items-center gap-2 cursor-pointer transition-all ${

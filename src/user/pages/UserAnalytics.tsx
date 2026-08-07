@@ -4,8 +4,6 @@ import {
   TrendingUp,
   DollarSign,
   Zap,
-  Cpu,
-  Calendar,
   RefreshCw,
   ArrowUpRight,
   PieChart,
@@ -19,8 +17,8 @@ export default function UserAnalytics() {
 
   // Animated stat values
   const totalRequests = useCountUp(14820, 1500)
-  const totalTokens = useCountUp(4892000, 1500)
-  const totalCost = useCountUp(64.8, 1500)
+  const totalTokens = useCountUp(4.89, 1500, 2)
+  const totalCost = useCountUp(64.80, 1500, 2)
   const avgLatency = useCountUp(284, 1500)
 
   return (
@@ -109,7 +107,7 @@ export default function UserAnalytics() {
               className="text-2xl font-bold text-foreground tracking-tight font-mono"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
-              {(totalTokens / 1000000).toFixed(2)}M
+              {totalTokens}M
             </span>
             <span className="text-xs text-emerald-400 font-semibold flex items-center gap-0.5">
               <ArrowUpRight size={12} />
@@ -132,7 +130,7 @@ export default function UserAnalytics() {
               className="text-2xl font-bold text-foreground tracking-tight font-mono"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
-              ${totalCost.toFixed(2)}
+              ${totalCost}
             </span>
             <span className="text-xs text-emerald-400 font-semibold flex items-center gap-0.5">
               -22.1% saved

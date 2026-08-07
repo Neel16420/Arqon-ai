@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import UserSidebar, { type UserPage } from '../components/UserSidebar'
-import UserHeader from '../components/UserHeader'
-import AvatarPickerModal from '../components/profile/AvatarPickerModal'
+import UserSidebar, { type UserPage } from './UserSidebar'
+import UserHeader from './UserHeader'
+import AvatarPickerModal from '../user/components/profile/AvatarPickerModal'
+import { LogoutConfirmationModal } from '../user/components/profile/LogoutConfirmationModal'
 import { LayoutDashboard, MessageSquare, FolderGit2, FileText, Menu } from 'lucide-react'
 
 const EXPANDED_W = 264
@@ -12,10 +13,9 @@ interface UserLayoutProps {
   children: React.ReactNode
   activePage: UserPage
   setActivePage: (p: UserPage) => void
-  onLogout: () => void
 }
 
-export default function UserLayout({ children, activePage, setActivePage, onLogout }: UserLayoutProps) {
+export default function UserLayout({ children, activePage, setActivePage }: UserLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarExpanded, setSidebarExpanded] = useState(() => {
     try { return localStorage.getItem('arqon-sidebar-pinned') !== 'false' } catch { return true }
@@ -44,6 +44,23 @@ export default function UserLayout({ children, activePage, setActivePage, onLogo
     setSidebarExpanded(expanded)
   }, [])
 
+  // ── Logout confirmation state & triggers ──
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
+
+  const handleLogoutTrigger = useCallback(() => {
+    setIsLogoutModalOpen(true)
+  }, [])
+
+  const handleLogoutSuccess = useCallback(() => {
+    // Reset layout state to match a fresh user session
+    setSelectedAvatarId('avatar-01')
+    setSelectedAvatarUrl('/avatars/avatar-01.png')
+    setSidebarOpen(false)
+    setIsAvatarModalOpen(false)
+    // Redirect using routing system
+    setActivePage('login')
+  }, [setActivePage])
+
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: 'var(--color-background)' }}>
       <UserSidebar
@@ -54,7 +71,7 @@ export default function UserLayout({ children, activePage, setActivePage, onLogo
         onExpandedChange={handleExpandedChange}
         avatarUrl={selectedAvatarUrl}
         onOpenAvatarModal={() => setIsAvatarModalOpen(true)}
-        onLogout={onLogout}
+        onLogout={handleLogoutTrigger}
       />
 
       {/* Content area — animated margin matches sidebar width on desktop */}
@@ -74,7 +91,7 @@ export default function UserLayout({ children, activePage, setActivePage, onLogo
             activePage={activePage}
             setActivePage={setActivePage}
             onMenuClick={() => setSidebarOpen(true)}
-            onLogout={onLogout}
+            avatarUrl={selectedAvatarUrl}
           />
 
           <main className="flex-1 overflow-y-auto pb-16 md:pb-6">
@@ -114,6 +131,13 @@ export default function UserLayout({ children, activePage, setActivePage, onLogo
         onClose={() => setIsAvatarModalOpen(false)}
         currentAvatarId={selectedAvatarId}
         onSaveAvatar={handleSaveAvatar}
+      />
+
+      {/* Global Logout Confirmation Modal */}
+      <LogoutConfirmationModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onSuccess={handleLogoutSuccess}
       />
     </div>
   )

@@ -24,10 +24,9 @@ import {
   PinOff,
   ChevronUp,
   LogOut,
-  Settings,
 } from 'lucide-react'
-import { cn } from '../../utils'
-import { useAuth } from '../../hooks/useAuth'
+import { cn } from '../utils'
+import { useAuth } from '../hooks/useAuth'
 
 export type UserPage =
   | 'login'
@@ -87,7 +86,7 @@ const mainNavItems: NavItem[] = [
 interface AccountMenuItem {
   label: string
   icon: React.ReactNode
-  action: 'profile-tab' | 'avatar-modal' | 'logout'
+  action: 'profile-tab' | 'avatar-modal'
   tab?: string
   danger?: boolean
 }
@@ -101,7 +100,6 @@ const ACCOUNT_MENU_ITEMS: AccountMenuItem[] = [
   { label: 'Notification Preferences',icon: <Bell size={14} />,        action: 'profile-tab', tab: 'notification-prefs' },
   { label: 'Help Center',             icon: <HelpCircle size={14} />,  action: 'profile-tab', tab: 'help' },
   { label: 'Connected Accounts',      icon: <Link2 size={14} />,       action: 'profile-tab', tab: 'connected' },
-  { label: 'Log Out',                 icon: <LogOut size={14} />,      action: 'logout', danger: true },
 ]
 
 // ─────────────────────────────────────────────
@@ -145,7 +143,7 @@ function ArqonLogo({ expanded }: { expanded: boolean }) {
           boxShadow: '0 0 10px rgb(var(--color-accent-rgb) / 0.1)',
         }}
       >
-        <img src="/logo/arqon-new-logo.png" alt="Arqon" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
+        <img src="/logo/arqon-logo.png" alt="Arqon" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
       </div>
       <AnimatePresence initial={false}>
         {expanded && (
@@ -195,7 +193,7 @@ export default function UserSidebar({
   onOpenAvatarModal,
   onLogout,
 }: UserSidebarProps) {
-  const { session, logout } = useAuth()
+  const { session } = useAuth()
 
   // ── Pin state ──
   const [pinned, setPinned] = useState<boolean>(() => {
@@ -245,11 +243,6 @@ export default function UserSidebar({
 
   const handleAccountMenuAction = useCallback((item: AccountMenuItem) => {
     setAccountMenuOpen(false)
-    if (item.action === 'logout') {
-      onLogout?.()
-      logout()
-      return
-    }
     if (item.action === 'avatar-modal') {
       onOpenAvatarModal?.()
       return
@@ -260,7 +253,7 @@ export default function UserSidebar({
       window.dispatchEvent(new PopStateEvent('popstate'))
       onClose()
     }
-  }, [setActivePage, onClose, onOpenAvatarModal, onLogout, logout])
+  }, [setActivePage, onClose, onOpenAvatarModal])
 
   // Shared label motion
   const labelMotion = {
@@ -392,29 +385,33 @@ export default function UserSidebar({
 
                 {/* Menu Items */}
                 <div className="p-1.5 space-y-0.5">
-                  {ACCOUNT_MENU_ITEMS.map((item, idx) => {
-                    const isDivider = idx === ACCOUNT_MENU_ITEMS.length - 1
-                    return (
-                      <div key={item.label}>
-                        {isDivider && <div className="my-1 border-t border-border/50" />}
-                        <button
-                          onClick={() => handleAccountMenuAction(item)}
-                          className={cn(
-                            'w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium cursor-pointer transition-all text-left',
-                            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent',
-                            item.danger
-                              ? 'text-rose-400 hover:bg-rose-500/10 hover:text-rose-300'
-                              : 'text-muted hover:text-foreground hover:bg-surface-2'
-                          )}
-                        >
-                          <span className={cn('shrink-0', item.danger ? 'text-rose-400' : 'text-muted')}>
-                            {item.icon}
-                          </span>
-                          {item.label}
-                        </button>
-                      </div>
-                    )
-                  })}
+                  {ACCOUNT_MENU_ITEMS.map((item) => (
+                    <button
+                      key={item.label}
+                      onClick={() => handleAccountMenuAction(item)}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium cursor-pointer transition-all text-left text-muted hover:text-foreground hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                    >
+                      <span className="shrink-0 text-muted">
+                        {item.icon}
+                      </span>
+                      {item.label}
+                    </button>
+                  ))}
+
+                  {/* Destructive Logout Button separated by dividers */}
+                  <div className="my-1.5 border-t border-border/50" />
+                  <button
+                    onClick={() => {
+                      setAccountMenuOpen(false)
+                      onLogout?.()
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold cursor-pointer transition-all text-left text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose-500/50"
+                  >
+                    <span className="shrink-0 text-rose-500">
+                      <LogOut size={14} />
+                    </span>
+                    <span>Log Out</span>
+                  </button>
                 </div>
               </motion.div>
             )}

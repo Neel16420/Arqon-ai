@@ -12,8 +12,8 @@ import {
 import { formatLatency } from "../utils"
 
 import { useStaggeredList } from "../motion/useStaggeredList"
-import { SearchInput } from "../components/SearchInput"
-import { EmptyState } from "../components/EmptyState"
+import { SearchInput } from "../components/shared/SearchInput"
+import { EmptyState } from "../components/shared/EmptyState"
 
 interface LogEntry {
   id: string

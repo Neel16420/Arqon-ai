@@ -35,9 +35,9 @@ import {
 import { maskKey } from "../utils"
 import { Avatar } from "./TeamManagement"
 import type { TeamMember } from "../store/team"
-import { SelectFilter, type SelectOption } from "../components/SelectFilter"
+import { SelectFilter, type SelectOption } from "../components/shared/SelectFilter"
 import { useTheme } from "../hooks/useTheme"
-import { ActionSuccessButton, StatusChangeIndicator } from "../components/SuccessFeedback"
+import { ActionSuccessButton, StatusChangeIndicator } from "../components/shared/SuccessFeedback"
 
 // ─── Foundational Reusable UI Components (Phase 13) ──────────────────────────
 

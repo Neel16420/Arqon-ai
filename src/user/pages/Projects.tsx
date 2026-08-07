@@ -10,18 +10,7 @@ import {
   X,
 } from 'lucide-react'
 
-export interface ProjectItem {
-  id: string
-  name: string
-  description: string
-  model: string
-  updatedAt: string
-  isFavorite: boolean
-  isArchived: boolean
-  tag: string
-  filesCount: number
-  chatsCount: number
-}
+import { ProjectItem } from '../../types'
 
 const INITIAL_PROJECTS: ProjectItem[] = [
   {

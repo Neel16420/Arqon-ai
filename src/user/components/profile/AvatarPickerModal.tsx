@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Sparkles, Upload, Trash2, Check, ShieldCheck } from 'lucide-react'
+import { X, Sparkles, Upload, Check, ShieldCheck } from 'lucide-react'
 import AvatarGrid, { ARQON_AVATARS } from './AvatarGrid'
 import { useToast } from '../../../components/toast/ToastContext'
 

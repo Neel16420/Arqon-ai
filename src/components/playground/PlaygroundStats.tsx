@@ -96,7 +96,7 @@ export function PlaygroundStats({
           {/* Arqon Engine Node */}
           <div className="w-6 h-6 rounded-md bg-accent/10 border border-accent/20 flex items-center justify-center relative shadow-[0_0_10px_rgba(255,59,59,0.1)]">
             <img
-              src="/logo/arqon-new-logo.png"
+              src="/logo/arqon-logo.png"
               alt="Arqon"
               className="w-3.5 h-3.5 object-contain opacity-80"
             />

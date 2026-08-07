@@ -8,7 +8,7 @@ import { createPortal } from "react-dom"
 
 import { useToast } from "../components/toast/ToastContext"
 import { motion, AnimatePresence } from "framer-motion"
-import { ActionSuccessButton, StatusChangeIndicator } from "../components/SuccessFeedback"
+import { ActionSuccessButton, StatusChangeIndicator } from "../components/shared/SuccessFeedback"
 
 import {
   Plus,
@@ -41,8 +41,8 @@ import { PROVIDER_METADATA } from "../store/registry"
 
 import { useProviders, type Provider } from "../store/providers"
 
-import { EmptyState } from "../components/EmptyState"
-import { SearchInput } from "../components/SearchInput"
+import { EmptyState } from "../components/shared/EmptyState"
+import { SearchInput } from "../components/shared/SearchInput"
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
 

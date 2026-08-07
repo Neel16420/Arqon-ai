@@ -21,9 +21,9 @@ import {
 } from "lucide-react"
 import { useToast } from "../components/toast/ToastContext"
 import { useCountUp } from "../motion/useCountUp"
-import { SelectFilter } from "../components/SelectFilter"
+import { SelectFilter } from "../components/shared/SelectFilter"
 import { useTeamStore } from "../store/team"
-import { EmptyState } from "../components/EmptyState"
+import { EmptyState } from "../components/shared/EmptyState"
 import { Users } from "lucide-react"
 
 interface UsagePolicy {

@@ -1,6 +1,6 @@
 /**
- * ARQON USER PANEL — Unified TypeScript Domain Models
- * Prepared for Backend Integration (Phase 23 & Milestone 13)
+ * ARQON — Unified TypeScript Domain Models
+ * Shared across Admin and User workspaces.
  */
 
 export type UserRole = 'user' | 'admin' | 'pro'
@@ -25,11 +25,11 @@ export interface AIModel {
   status: 'Operational' | 'Degraded' | 'Beta'
   contextLength: string
   speed: string
-  costPer1k: string
+  costPer1k?: string
   description: string
   isRecommended?: boolean
-  isFavorite: boolean
-  capabilities: string[]
+  isFavorite?: boolean
+  capabilities?: string[]
 }
 
 export interface ChatMessage {

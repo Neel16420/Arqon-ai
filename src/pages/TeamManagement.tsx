@@ -45,11 +45,11 @@ import {
 
 import { useCountUp } from "../motion/useCountUp"
 import { motion, AnimatePresence } from "framer-motion"
-import { ActionSuccessButton } from "../components/SuccessFeedback"
+import { ActionSuccessButton } from "../components/shared/SuccessFeedback"
 
-import { EmptyState } from "../components/EmptyState"
-import { SearchInput as TeamSearchInput } from "../components/SearchInput"
-import { SelectFilter } from "../components/SelectFilter"
+import { EmptyState } from "../components/shared/EmptyState"
+import { SearchInput as TeamSearchInput } from "../components/shared/SearchInput"
+import { SelectFilter } from "../components/shared/SelectFilter"
 import { useTeamStore, useTeamActivity, type Role, type MemberStatus, type TeamMember, type ActivityEvent } from "../store/team"
 import { useAuth } from "../hooks/useAuth"
 

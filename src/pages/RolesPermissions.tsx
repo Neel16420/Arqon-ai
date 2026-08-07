@@ -21,7 +21,7 @@ import {
 import { useToast } from "../components/toast/ToastContext"
 import { useCountUp } from "../motion/useCountUp"
 import { useTeamStore } from "../store/team"
-import { EmptyState } from "../components/EmptyState"
+import { EmptyState } from "../components/shared/EmptyState"
 
 interface PermissionSet {
   view: boolean

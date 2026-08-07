@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { HelpCircle, BookOpen, Bug, MessageSquare, ChevronDown, ExternalLink, Search } from 'lucide-react'
+import { HelpCircle, BookOpen, Bug, MessageSquare, ChevronDown } from 'lucide-react'
 import { useToast } from '../../../components/toast/ToastContext'
 
 export function HelpCenterSection() {

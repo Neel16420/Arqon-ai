@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { CheckCircle2, Loader2 } from "lucide-react"
-import { useToast } from "./toast/ToastContext"
-import { useReducedMotion } from "../motion/useReducedMotion"
+import { useToast } from "../toast/ToastContext"
+import { useReducedMotion } from "../../motion/useReducedMotion"
 
 export interface ActionSuccessButtonProps
   extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onClick"> {

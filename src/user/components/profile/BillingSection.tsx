@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { CreditCard, Zap, Download, Check, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react'
+import { Zap, Download, Sparkles, ArrowRight } from 'lucide-react'
 import { useToast } from '../../../components/toast/ToastContext'
 
 export function BillingSection() {

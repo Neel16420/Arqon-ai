@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   ShieldCheck,
@@ -8,8 +8,6 @@ import {
   Globe,
   Trash2,
   Check,
-  Lock,
-  History,
 } from 'lucide-react'
 import { useToast } from '../../../components/toast/ToastContext'
 

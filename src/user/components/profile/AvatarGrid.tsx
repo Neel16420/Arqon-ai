@@ -1,4 +1,3 @@
-import React from 'react'
 import { motion } from 'framer-motion'
 import AvatarCard from './AvatarCard'
 
@@ -37,7 +36,7 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, scale: 0.9, y: 10 },
-  show: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 350, damping: 25 } },
+  show: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring' as const, stiffness: 350, damping: 25 } },
 }
 
 export function AvatarGrid({

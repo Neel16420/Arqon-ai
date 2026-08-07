@@ -22,8 +22,8 @@ import {
   Clock,
 } from "lucide-react"
 import { useCountUp } from "../motion/useCountUp"
-import { SearchInput } from "../components/SearchInput"
-import { EmptyState } from "../components/EmptyState"
+import { SearchInput } from "../components/shared/SearchInput"
+import { EmptyState } from "../components/shared/EmptyState"
 import { useTeamStore, useTeamActivity } from "../store/team"
 import { Users } from "lucide-react"
 

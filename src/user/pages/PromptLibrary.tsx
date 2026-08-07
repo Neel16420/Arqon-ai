@@ -11,15 +11,7 @@ import {
   Trash2,
 } from 'lucide-react'
 
-export interface SavedPrompt {
-  id: string
-  title: string
-  category: string
-  tags: string[]
-  content: string
-  isFavorite: boolean
-  usageCount: number
-}
+import { SavedPrompt } from '../../types'
 
 const INITIAL_PROMPTS: SavedPrompt[] = [
   {

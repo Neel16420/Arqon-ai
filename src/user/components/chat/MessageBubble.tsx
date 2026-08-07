@@ -1,15 +1,7 @@
 import { useState } from 'react'
 import { Bot, User, Copy, Check, RefreshCw, Terminal } from 'lucide-react'
 
-export interface ChatMessage {
-  id: string
-  role: 'user' | 'assistant' | 'system'
-  content: string
-  timestamp: string
-  tokens?: number
-  modelName?: string
-  codeSnippets?: Array<{ language: string; code: string }>
-}
+import { ChatMessage } from '../../../types'
 
 interface MessageBubbleProps {
   message: ChatMessage
